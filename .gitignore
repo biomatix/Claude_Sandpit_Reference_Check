@@ -1,0 +1,69 @@
+# ============================================================
+#  Claude_SandPit_Biomatix_Reports — .gitignore
+#  Tracks the harness (CLAUDE.md, skills, agents, hooks,
+#  commands, manual). Ignores all client work and per-machine
+#  state.
+# ============================================================
+
+# --- R session / RStudio state ------------------------------
+.Rproj.user/
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+*.Rcheck/
+*.tar.gz
+*-Ex.R
+
+# --- renv (uncomment if you adopt renv later) ---------------
+# renv/library/
+# renv/local/
+# renv/cellar/
+# renv/lock/
+# renv/python/
+# renv/staging/
+
+# --- Per-machine Claude Code state --------------------------
+.claude/active_job
+.claude/settings.local.json
+.claude/.credentials.json
+
+# --- Project-level memory ----------------------------------
+#  Track the empty MEMORY.md proforma and memory/.gitkeep so
+#  fresh clones have the structure CLAUDE.md §7 expects.
+#  Ignore every actual memory file written into memory/.
+memory/*
+!memory/.gitkeep
+
+# --- All client work (data, briefs, drafts, outputs) --------
+#  jobs/<slug>/ contains contract briefs, raw data, references,
+#  outputs, and per-job memory. None of it goes to GitHub even
+#  in a private repo. The directory itself does not need to be
+#  tracked; /new-job creates it on first use.
+jobs/
+
+# --- Python bytecode (skills bundle .py helpers) ------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Backup files -------------------------------------------
+*.bak
+*.orig
+
+# --- OS / editor cruft --------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Secrets (defence in depth) -----------------------------
+.env
+.env.*
+*.pem
+*.key
+*_rsa
+*_rsa.pub

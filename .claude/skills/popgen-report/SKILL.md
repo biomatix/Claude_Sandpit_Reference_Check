@@ -1,67 +1,110 @@
 ---
 name: popgen-report
-description: Use when the user asks for a Biomatix consulting report (to a client, government department, or conservation NGO) on a population-genetics question — typically presented with a brief, a client name, a numbered question list, a path to a .Rdata file, and species/conservation context. Orchestrates a six-role pipeline (ecologist, conservationist, geneticist, planner, analyst, critic) and assembles a Biomatix house-style report (Executive Summary → Brief → Variation → Preamble → Preliminary Analysis → Results → Strategy → Acknowledgements → References) on a Biomatix cover page. Reads `./playbook.md` for the analyst playbook and `./report_template.md` for section-level prose conventions. Assumes (a) an active RStudio HTTP API (default http://127.0.0.1:8787/, override via project CLAUDE.md), (b) the dartRverse R package, (c) the sibling skills clear-writing, reference-style-1, citation-check, claim-check.
+description: Use when the user asks for a Biomatix consulting report (to a client, government department, or conservation NGO) on a population-genetics question — typically presented with a set of numbered questions (each with optional context and facts), a focal taxon, a client name, and a path to a filtered .Rdata/.rds genlight. The Orchestrator confirms the questions with the user, runs the ecologist, conservationist and geneticist briefing agents concurrently, then the planner (with user sign-off) and the analyst, and assembles a Biomatix house-style scientific report (Executive Summary with recommendations → Brief → Variation → Preamble → Materials and Methods → Results → Discussion → References) on a Biomatix cover page, finishing with up to three critic review cycles. Reads `./playbook.md` (analyst playbook) and `./report_template.md` (section prose conventions). Assumes (a) an active RStudio HTTP API (default http://127.0.0.1:8787/, override via project CLAUDE.md), (b) the dartRverse R package, (c) the sibling skills lit-search-a, lit-search-b, clear-writing, reference-style-1, citation-check, claim-check, and (d) the agents ecologist, conservationist, geneticist, planner, analyst and the four critics in `.claude/agents/`.
 ---
 
 # popgen-report
 
-A skill for producing a Biomatix consulting report on a population-genetics question for a client (private, government, or NGO).
+A skill for producing a Biomatix consulting report on a population-genetics question for a
+client (private, government, or NGO). The report follows a scientific-paper structure
+(Materials and Methods → Results → Discussion), with the client-facing recommendations carried
+in the Executive Summary.
 
 ## How invocation works
 
 The user invokes this skill with a project-specific prompt that supplies:
 
+- **Numbered questions** the client wants answered (Q1, Q2, …). Each question may carry its own
+  **context** and/or **facts** that bear on how it must be answered.
+- **Focal taxon** — the species or group of closely related species the report is about (see
+  *Focal taxon* below). Often the precise species is itself a question, in which case a genus or
+  candidate set is supplied.
 - **Client** — name and address of the recipient organisation (appears on the cover page).
-- **Brief** — one or two sentences, verbatim from the contract, naming the deliverable.
-- **Variation to the brief** — `None` or a short bulleted list of agreed deviations.
-- **Species and conservation context** — scientific name, common name, listing status.
-- **Data location** — path to a filtered `.Rdata` / `.rds` genlight object, with the object name.
-- **Numbered questions** the client wants answered (Q1, Q2, …).
-- **Binding facts** that constrain the recommendations (e.g., "the captive cohort is sex-biased toward males", "release of additional wild-caught animals requires NSW DPE approval not yet held").
-- **Deliverable date** — the date that appears on the cover page.
-- **Cover-page assets** — photo file (`assets/cover_<project>.jpg`), photographer credit, report title.
-- **Acknowledgements** — client team members and any advisors.
+- **Data location** — path to a filtered `.Rdata` / `.rds` genlight object.
+- **Binding facts** that constrain the recommendations (e.g. "the captive cohort is sex-biased
+  toward males"; "release of additional wild-caught animals requires approvals not yet held").
+- **Jurisdiction** — country and (where relevant) State/province, for the conservationist's
+  statutory-framework search.
+- **Deliverable date**, cover-page photo + credit, report title, and acknowledgements.
 
-If any of these is missing or unclear, **ask before dispatching any agent**. Do not infer the brief, the questions, or the binding facts from the data alone.
+If any load-bearing item (questions, focal taxon, client, data path) is missing or unclear,
+**confirm with the user before dispatching any agent**. Do not infer the questions or the
+binding facts from the data alone.
+
+## Focal taxon
+
+Each report focuses on a **focal taxon** — usually one species, sometimes a group of closely
+related species. The focal taxon is the subject every briefing agent searches on and the
+organism the analysis characterises. Establish it at intake and pass it, verbatim, to the
+ecologist, conservationist, and geneticist. Where the species identity is itself one of the
+client's questions, the focal taxon at intake is the candidate genus/set, and the report's
+species determination resolves it.
 
 ## Sibling files in this skill
 
-- `./report_template.md` — section-by-section prose conventions and tense/voice expectations for Biomatix reports. Read at Step 3 (Assembly).
-- `./playbook.md` — analyst playbook (Appendices A and B), with R code helpers (`save_fig()`, `save_tbl()`, etc.) and the flags table. Read at Step 2.
-- `./troubleshooting.md` — troubleshooting common dartRverse issues. Read on demand when an analyst step fails.
-- `./assets/` — Biomatix logo, cover-page LaTeX template, standard footer. Per-project photos live in the job's `outputs/` directory, not in `assets/`.
+- `./report_template.md` — section-by-section prose conventions, tense/voice per section. Read
+  before drafting (Step 3 / Step 4).
+- `./playbook.md` — analyst playbook (Appendices A and B), R helpers (`save_fig()`,
+  `save_tbl()`), the mandatory baseline recipes, and the flags table. Read by the planner and
+  the analyst.
+- `./troubleshooting.md` — common dartRverse issues; read on demand when a step fails.
+- `./assets/` — Biomatix logo, cover-page and body Word templates, render helper.
 
-## Project-level dependencies
-
-These come from the project's CLAUDE.md, not from this skill:
+## Project-level dependencies (from CLAUDE.md, not this skill)
 
 - The RStudio HTTP API endpoint (default `http://127.0.0.1:8787/`).
 - External binary paths (NeEstimator, pandoc-crossref) and their R-option mappings.
-- The sibling skills `clear-writing`, `reference-style-1`, `citation-check`, `claim-check`.
+- The sibling skills `lit-search-a`, `lit-search-b`, `clear-writing`, `reference-style-1`,
+  `citation-check`, `claim-check`.
 
 ---
 
-# Coordinator role
+# Orchestrator role
 
-You are the **coordinator** of a multi-agent pipeline that produces a Biomatix consulting report on a population-genetics question. You orchestrate six subordinate roles — ecologist, conservationist, geneticist, planner, analyst, critic — and assemble their outputs into a single client-facing report.
+You are the **Orchestrator** of a multi-agent pipeline that produces a Biomatix consulting
+report. You initiate the subordinate agents, set aside their tables/figures/text/references,
+and combine them into a single client-facing report.
 
 You own:
-- the DAG (who starts when, who waits on whom),
-- the report assembly (markdown under the Biomatix template — see `./report_template.md`),
-- application of the `clear-writing` and `reference-style-1` skills during drafting and revision,
-- rendering the final PDF with the Biomatix cover page.
+- the DAG (who starts when, who waits on whom) and the two **human gates** (question
+  confirmation; plan sign-off);
+- assembly of the report in markdown under the Biomatix template (`./report_template.md`);
+- writing the Preamble, Discussion, and Executive Summary, and consolidating every agent's
+  references into one References section;
+- application of `clear-writing` and `reference-style-1` as you draft and revise;
+- rendering the final Word document on the Biomatix cover page.
 
-The **critic** scrutinises **scientific substance and client-defensibility** — analysis, interpretation, and whether the Strategy section's recommendations are concrete, named, and actionable. Prose quality is your responsibility, not the critic's: apply `clear-writing` and `./report_template.md` yourself as you draft and revise. The critic is also the only role that invokes `citation-check`, and only on its final cycle.
+## Agents and sub-agents
+
+Spawn each via the Agent tool using its `subagent_type` (the agent's `name`). All briefing
+agents and critics are **read-only** and return markdown; you write the consolidated files.
+
+| Agent | Role | Skills it applies | Starts |
+|---|---|---|---|
+| `ecologist` | ecology + life-history of the focal taxon; parameter table for the planner | lit-search-a | Step 1 (concurrent) |
+| `conservationist` | conservation biology, priorities, recovery actions; status summary | lit-search-a + lit-search-b | Step 1 (concurrent) |
+| `geneticist` | genetics/genomics of the focal taxon; analytical options for the planner | lit-search-a | Step 1 (concurrent) |
+| `planner` | designs the analysis from questions + briefings; mandatory baseline | (playbook) | Step 2, after Step 1 |
+| `analyst` | executes the signed-off plan via the RStudio API; saves figures/tables | (playbook) | Step 2, after sign-off |
+| `critic-coverage` | every Qi answered substantively; binding facts honoured | — | Step 5 |
+| `critic-substance` | methods, calibration, results→recommendations traceability | (playbook App. B) | Step 5 |
+| `critic-citations` | existence + metadata (citation-check) and claim vs source (claim-check) | citation-check, claim-check | Step 5 |
+| `critic-writing` | prose + reference formatting, ≤15 rewrites | clear-writing, reference-style-1 | Step 5 |
 
 ### Client questions are load-bearing
 
-Every explicit question the client posed in the prompt is a deliverable, not a discussion topic.
+Every explicit question the client posed is a deliverable, not a discussion topic.
 
-- **Each client question must be answered substantively in the Strategy section**, with concrete recommendations naming specific individuals (animal IDs, populations, sites) where applicable. Hedging or "future work" framings are not acceptable in a paid report.
-- **If a critic recommends moving the answer to a client-explicit question into "future work" or "out of scope", do not comply.** The client paid for the question to be answered; the critic's role is to scrutinise the substance of the answer, not relitigate scope.
-- **Stated facts in the brief constrain the recommendations.** If the client states a constraint ("release of additional wild-caught animals requires approvals not yet held"), no recommendation in any section may contradict it. The Executive Summary is the most likely place to regress to template language; cross-check against binding facts before declaring done (Step 3 closing pass).
-
-Do not begin execution until Step 0 (intake) is complete and the Step 0.1 prompt-coverage table is confirmed by the user.
+- **Each client question must be answered substantively** — its finding in Results, its
+  interpretation in Discussion, and, where it implies a decision, its **recommendation in the
+  Executive Summary**, naming specific individuals (animal IDs, populations, sites) where
+  applicable. Hedging or "future work" framings are not acceptable in a paid report.
+- **If a critic recommends moving a client-explicit question to "future work" or "out of
+  scope", do not comply.** The client paid for the question; the critic scrutinises the
+  substance of the answer, not the scope.
+- **Binding facts constrain the recommendations.** No recommendation in any section may
+  contradict a stated fact. The Executive Summary is the most likely regression site — check it
+  against the binding facts on the closing pass.
 
 ---
 
@@ -69,243 +112,272 @@ Do not begin execution until Step 0 (intake) is complete and the Step 0.1 prompt
 
 | Constraint | Value |
 |---|---|
-| Executive Summary length | 250–350 words |
-| Total length | Typically 8–15 pages including cover, citation page, body, tables, references. No hard cap; brevity is a feature in client reports |
-| Structure | Biomatix house template (see `./report_template.md`) — **not** IMRAD |
-| Reference style | CSIRO Harvard (`reference-style-1` skill) |
-| Prose standard | Applied via `clear-writing` skill during drafting and revision; tense and voice per section as defined in `./report_template.md` |
-| Cover page | Biomatix logo + title + recipient + date + project photo + ABN/contact footer (Step 6 generates this) |
+| Structure | Biomatix scientific-paper template (`./report_template.md`): Title → Executive Summary (summary + Recommendations) → Brief → Variation → Preamble → Materials and Methods → Results → Discussion → Acknowledgements → References |
+| Executive Summary | concise precis of results and conclusions, then a Recommendations block; no hard cap, discipline is house style |
+| Results vs Discussion | Results states findings with enough reading of each table/statistic to be understood, **no discussion**; Discussion contextualises against the literature |
+| Total length | typically 8–15 pages incl. cover, body, tables, references. Brevity is a feature |
+| Reference style | CSIRO Harvard (`reference-style-1`) |
+| Prose standard | `clear-writing`; tense/voice per section per `./report_template.md` |
+| Cover page | Biomatix logo + title + recipient + date + photo + ABN/contact footer (Step 6) |
 
 ---
 
 ## Working-directory layout
 
-Each contract has its own working directory at `jobs/<slug>/` (scaffolded by `/new-job`, populated by `/intake`). For the duration of one report, the **working directory is `jobs/<slug>/`** and every relative path below — `outputs/`, `data/`, `references/`, `brief.yaml` — resolves against it.
-
-The R session is set to that working directory at Step 2 (`setwd(file.path("jobs", "<slug>"))`), and all paths in `./playbook.md` §A.1.1 (`output_dir <- "outputs"`) resolve correctly from there. Every artefact this skill produces is written into `outputs/` of the active job's working directory. The Analyst at Step 2 creates the directory via the helpers in `./playbook.md` §A.1.1. The Coordinator's Step 6 also writes into `outputs/`.
+Each contract has its own working directory at `jobs/<slug>/` (scaffolded by `/new-job`,
+populated by `/intake`). For one report the working directory is `jobs/<slug>/`; every relative
+path below resolves against it. The analyst sets the R session there
+(`setwd(file.path("jobs", "<slug>"))`) so `output_dir <- "outputs"` resolves. Everything this
+skill produces lands in `outputs/`.
 
 | File | Location | Written by |
 |---|---|---|
-| Figure PDFs and `.md` snippets | `outputs/` | Analyst (`save_fig()`) |
-| Table CSVs and `.md` snippets | `outputs/` | Analyst (`save_tbl()`) |
-| `prompt_coverage_table.md` | `outputs/` | Coordinator (Step 0.1) |
-| `report_draft.md`, `citation_provenance.md`, `prompt_coverage_audit.md` | `outputs/` | Coordinator (Step 3) |
-| `_cover.docx`, `_body.docx`, `report_final.docx` | `outputs/` | Coordinator (Step 6, via `render_word_report.R`) |
-| `citation_check_changes.md` | `outputs/` | Critic via `citation-check` (Step 5) |
+| Figure images + `.md` snippets | `outputs/` | Analyst (`save_fig()`) |
+| Table CSVs + `.md` snippets | `outputs/` | Analyst (`save_tbl()`) |
+| `prompt_coverage_table.md` | `outputs/` | Orchestrator (Step 0) |
+| `analysis_plan.md` | `outputs/` | Orchestrator (Step 2, from planner) |
+| `report_draft.md`, `citation_provenance.md`, `prompt_coverage_audit.md` | `outputs/` | Orchestrator (Steps 3–4) |
+| `coverage_audit.md`, `substance_audit.md`, `citations_audit.md`, `writing_audit.md` | `outputs/` | Orchestrator (from critics, Step 5) |
+| `_cover.docx`, `_body.docx`, `report_final.docx` | `outputs/` | Orchestrator (Step 6) |
 
-The user-supplied input (the filtered `.Rdata` / `.rds` genlight) stays at its original path; nothing this skill writes lands at the workspace root. Per-project assets the user provides (cover photo) should be placed in `outputs/` or referenced by absolute path from the intake; the Biomatix logo and cover-page LaTeX template live in `./assets/`.
+The user-supplied genlight stays at its original path. Per-project assets (cover photo) live in
+`outputs/` or are referenced by absolute path; the logo and templates live in `./assets/`.
 
 ---
 
 ## Execution DAG
 
 ```
-Step 0: Intake (including the prompt-coverage table — user must confirm
-         before Step 1 dispatches)
-       │
-       ▼
-Step 1: Parallel briefings — Ecologist (blocking), Conservationist
-        (parallel), Geneticist (parallel)
-       │
-       ▼
-Step 2: Planner ──▶ Analyst (sequential; both follow Ecologist;
-        Analyst reads ./playbook.md)
-       │
-       ▼
-Step 3: Assembly (Coordinator drafts the Biomatix-template report;
-        sees ./report_template.md for section conventions)
-       │
-       ▼
-Step 4: Critique cycles (critic-coverage + critic-substance +
-        critic-writing in parallel; hard cap at 3 cycles)
-       │
-       ▼
-Step 5: Final cycle — critic-citations runs citation-check + claim-check
-       │
-       ▼
-Step 6: Coordinator runs render_word_report.R to produce
-        outputs/report_final.docx (Word-only deliverable)
+Step 0  Intake + question confirmation  ── HUMAN GATE 1 ──┐
+        (Orchestrator restates the questions; user confirms/amends;
+         prompt-coverage table written)                    │
+                       ▼
+Step 1  Parallel briefings — ecologist + conservationist + geneticist
+        (concurrent; return-only; Orchestrator sets aside text + refs)
+                       ▼
+Step 2  Planner ── HUMAN GATE 2 ── (user signs off / amends plan)
+                       ▼ then
+        Analyst (executes signed-off plan; installs software as needed)
+                       ▼
+Step 3  Assemble Materials and Methods + Results (from the analyst)
+                       ▼
+Step 4  Write Preamble, Discussion, Executive Summary; consolidate References
+                       ▼
+Step 5  Critic cycles — coverage + substance + citations + writing in parallel
+        (Orchestrator addresses deficiencies, re-engaging subagents as needed;
+         hard cap at 3 cycles)
+                       ▼
+Step 6  Render outputs/report_final.docx (Word deliverable) → hand to user
 ```
 
 ---
 
-## Step 0 — Intake
+## Step 0 — Intake and question confirmation (Human gate 1)
 
-The job slug `<slug>` must already exist under `jobs/` (created by `/new-job`) and `jobs/<slug>/brief.yaml` must already be populated (created by `/intake jobs/<slug>/brief.md`). If either is missing, stop and direct the user to run those commands first — do not attempt to recreate the contract by asking the user thirteen questions inline.
+The job slug `<slug>` must already exist under `jobs/` (`/new-job`) and `jobs/<slug>/brief.yaml`
+must be populated (`/intake jobs/<slug>/brief.md`). If either is missing, direct the user to run
+those commands first — do not reconstruct the contract by interrogation.
 
-Read `jobs/<slug>/brief.yaml` as the canonical contract. Most fields are either explicitly filled or intentionally deferred to a downstream agent (see below) — **do not prompt the user for the deferred fields**.
+Read `jobs/<slug>/brief.yaml` as the canonical contract. Most fields are explicit or
+intentionally deferred to a downstream agent — do not prompt for the deferred ones.
 
-| Field | Source | If empty in yaml |
+| Field | Source | If empty |
 |---|---|---|
-| `client.name`, `client.address` | brief | **prompt the user** |
-| `project.title` | brief | **prompt the user** |
-| `project.species.scientific_name` | brief (often a genus when species is a Q) | **prompt the user** if blank |
-| `project.species.common_name` | filled by Coordinator after the species-assignment Q is resolved | leave blank; do not prompt |
-| `project.species.conservation_status` | filled by Conservationist briefing agent at Step 1 (EPBC / BCAct / IUCN) | leave blank; do not prompt |
-| `data.rdata_path` | brief or user | **hard blocker — refuse to proceed without this** |
-| `questions[]` | brief | **prompt the user** if empty (intake should have filled) |
-| `binding_facts[]` | brief | empty list is acceptable |
-| `deliverables[].deadline` | brief or user | default to today's date (cover-page date); do not prompt |
-| `acknowledgements[]` | brief | empty list is acceptable; do not prompt |
-| `notes` | brief / intake | use as supplied |
+| `client.name`, `client.address`, `project.title` | brief | **prompt the user** |
+| `project.species.scientific_name` (focal taxon; may be a genus when species is a Q) | brief | **prompt** if blank |
+| `project.species.common_name` | filled by Orchestrator after a species-assignment Q resolves | leave blank |
+| `project.species.conservation_status` | filled from the conservationist briefing (Step 1) | leave blank |
+| jurisdiction | brief / user | **ask** if the conservation context needs a statutory framework |
+| `data.rdata_path` | brief or user | **hard blocker — refuse to proceed without it** |
+| `questions[]` (with any per-question context/facts) | brief | **prompt** if empty |
+| `binding_facts[]` | brief | empty list acceptable |
+| `deliverables[].deadline` | brief or user | default to today (cover date); do not prompt |
+| `acknowledgements[]` | brief | empty list acceptable |
 
-**Loading the data.** The Analyst at Step 2 loads with `gl <- gl.load(file = <data.rdata_path>)`. dartRverse infers marker type (SNP / silicoDArT) from the file — you do **not** need an `object_name` or a `marker_type` field. Do not ask for them.
+**Loading the data.** The analyst loads with `gl.load(file = <data.rdata_path>)`; dartRverse
+infers the marker type. Do not ask for an object name or marker type.
 
-**Other items to gather inline** (not in the yaml):
+**Gather inline** (not in the yaml): whether `pop(gl)` is assigned and whether coordinates are
+in `@other$latlon`; the cover-page photo path + credit; any prior work signalled in `notes`; and
+the dartRverse version (`packageVersion("dartRverse")` via the API).
 
-- **Populations** — `pop(gl)` already assigned? Coordinates in `@other$latlon`? Ask the user.
-- **Cover-page photo** — photo file path (typically `jobs/<slug>/outputs/cover_<slug>.jpg`) and photographer credit. Ask if not supplied.
-- **Prior work** — anything in `notes` that signals analyses already completed; ask only if the brief implies prior work without naming it.
-- **Software versions** — run `packageVersion("dartRverse")` via the RStudio API; note the version.
+### Step 0.1 — Confirm the questions and write the prompt-coverage table (the gate)
 
-Record this briefing block (yaml + user clarifications). Pass species/conservation details to Ecologist, Conservationist, Geneticist; the full block to Planner and Analyst; the cover-page block to Step 6.
+Restate, in your own words, your understanding of each question Qi (with its context/facts),
+and the focal taxon, and **hand this back to the user for confirmation or amendment**. This is
+the first human gate — the user's spec requires it before any agent runs.
 
-### Step 0.1 — Prompt-coverage table (mandatory; gate to Step 1)
+Once confirmed, write `outputs/prompt_coverage_table.md`: one row per Qi (verbatim), each
+binding fact, and the deliverable location that will address it (e.g. "Result in Results §X +
+Recommendation 2 in the Executive Summary, naming animal IDs"). This confirmed table is the
+contract the Step 4 closing pass and `critic-coverage` audit against.
 
-Parse the brief.yaml and the user's invocation, then produce a table listing every question Qi (verbatim), every binding fact, and the deliverable section that addresses each. Save the confirmed table to `outputs/prompt_coverage_table.md`. The deliverable section column should name the report sub-section (e.g. "Strategy principle 2 + Executive Summary point 3 with named animal IDs"). The confirmed table becomes the contract that the Step 3 closing pass and `critic-coverage` audit against.
-
-Hand the table back to the user and wait for explicit confirmation before dispatching Step 1.
-
----
-
-## Step 1 — Parallel briefings
-
-Three briefing agents (Ecologist blocking, Conservationist and Geneticist parallel) returning markdown briefings, each ending with a `## Citation provenance` table linking each in-text citation to the specific passage in the cited publication that supports the claim.
-
-**One adjustment for reports.** The briefings inform the **Preamble** section (single section, ~3–4 paragraphs) rather than separate Introduction + Methods context paragraphs. Tell each agent that their briefing will be consolidated into a Preamble for a client-facing report, not a journal Introduction — the prose target is concise, decision-relevant context, not a literature review. Word cap remains 1500 per briefing (excluding provenance table); most reports use only ~30% of each briefing.
+Do not dispatch Step 1 until the user has confirmed the questions.
 
 ---
 
-## Step 2 — Planner then Analyst
+## Step 1 — Parallel briefings (concurrent)
+
+Spawn `ecologist`, `conservationist`, and `geneticist` **in a single message with three Agent
+calls** so they run concurrently. Pass each:
+
+- the focal taxon (scientific + common name);
+- the confirmed client questions (so genetics/ecology/conservation map to Q1..Qn);
+- to the conservationist additionally: the jurisdiction;
+- to the geneticist additionally: the dataset description (marker type, individuals, loci,
+  populations).
+
+Each returns a markdown briefing ending in a **References** block and a **Citation provenance**
+table. Set aside all three briefings and their references for later consolidation. From them,
+extract for the planner: the ecologist's **life-history parameter table**, the geneticist's
+**analytical-options table**, and the conservationist's **priorities**.
+
+The briefings inform the **Preamble** and **Discussion** (not a journal Introduction). They are
+concise, decision-relevant context — most reports use only ~30% of each briefing.
+
+---
+
+## Step 2 — Planner (Human gate 2), then Analyst
 
 ### Planner
 
-Spawn as `Plan` agent (or play the role inline). Prompt:
+Spawn the `planner` agent. Pass: the confirmed questions + the prompt-coverage table; the three
+briefings (especially the ecologist's parameters and the geneticist's options); the dataset
+description; and a pointer to `./playbook.md`. The planner returns a concise plan that maps
+every Qi to an analysis and always includes the mandatory baseline (summary statistics; a
+`gl.map.interactive()` map; a `gl.pcoa()` + `gl.pcoa.plot()` PCA).
 
-> You are the **planner**. Given the ecologist's life-history briefing (attached), the user's dataset description (attached), and the client's numbered questions (attached), design a population-genetics analysis using the dartRverse playbook in `./playbook.md` of the popgen-report skill. The deliverable is a Biomatix consulting report — choose the smallest set of analyses that answers the client's questions decisively. Avoid analyses whose results would be too uncertain or too caveat-laden to be actionable for the client. The plan must address every question Qi from the prompt-coverage table — for any Qi whose answer requires an analysis not in the standard playbook, design the bespoke analysis explicitly. Specify which figures and tables the report will contain. Under 800 words.
+Save the plan to `outputs/analysis_plan.md` and **present it to the user for sign-off or
+amendment** — the second human gate. Do not start the analyst until the plan is signed off.
 
 ### Analyst
 
-Do not delegate. The analyst role is played inline by the Coordinator and uses the active RStudio session. **Read `./playbook.md` (Appendices A and B) at the start of this step.** Execute the plan step by step. Save every figure via `save_fig()` and every table via `save_tbl()` (defined in playbook §A.1.1) — these write into `outputs/` with sibling caption snippets that the Coordinator will inject at Step 3.
-
-Return a markdown results document with: one paragraph per analysis step, the `{#fig:label}` / `{#tbl:label}` for each saved artefact and the path to its `.md` snippet, and any flagged issues from the playbook's flags table.
+Spawn the `analyst` agent with the signed-off plan, the data path, the slug, the RStudio
+endpoint, and a pointer to `./playbook.md`. It executes the plan against the active RStudio
+session, installs software as required, saves every figure via `save_fig()` and every table via
+`save_tbl()` into `outputs/`, and returns a results document (one paragraph per step, the
+`@fig:`/`@tbl:` labels and snippet paths, filtering applied, and any flags). Set the results
+document aside for Step 3.
 
 ---
 
-## Step 3 — Assembly
+## Step 3 — Assemble Materials and Methods and Results
 
-Draft the report in markdown following the Biomatix template. **Read `./report_template.md` before drafting** — it specifies section order, length expectations, tense, voice, and prose conventions for each section. Apply `clear-writing` for prose quality and `reference-style-1` when inserting each reference into the list.
+**Read `./report_template.md` before drafting.** Apply `clear-writing` for prose and
+`reference-style-1` for any reference you insert.
 
-Section sources:
-
-| Section | Primary input |
-|---|---|
-| Cover page (rendered at Step 6) | Step 0 cover-page metadata |
-| Citation block (rendered at Step 6) | Coordinator (auto-generated from cover-page metadata) |
-| Executive Summary | Coordinator (250–350 words; draft last) |
-| Brief | User (verbatim from intake) |
-| Variation to the Brief | User (verbatim from intake) |
-| Preamble | Ecologist + Conservationist briefings, condensed to 3–4 paragraphs |
-| Preliminary Analysis: Data generation | Geneticist briefing (sample handling) + project-specific lab notes |
-| Preliminary Analysis: SNP genotyping | Geneticist briefing (DArTseq pipeline) + Analyst (filtering applied) |
-| Results | Analyst |
-| Strategy | Analyst's findings + the client's questions (every Qi must be answered here) |
-| Acknowledgements | Coordinator (from Step 0 intake) |
-| References | Consolidated from briefings; formatted per `reference-style-1` |
-| Supplementary: `citation_provenance.md` | Concatenation of briefing agents' provenance tables, with a fourth table added for citations introduced during assembly or critique cycles |
-
-Save the draft as `outputs/report_draft.md`. Save the consolidated provenance log as `outputs/citation_provenance.md` alongside it. If you introduce a new citation during assembly or in response to the critic, add the matching provenance row at the same time.
+- **Materials and Methods** — three subsections:
+  - *Data generation* — from the geneticist briefing (sample handling, lab vendor) + project
+    lab notes;
+  - *SNP genotyping* — DArTseq pipeline + the analyst's filtering paragraph (steps applied,
+    loci × individuals retained);
+  - *Analysis* — the analyses the planner specified and the analyst executed, naming each
+    dartRverse function and key non-default parameters, including the mandatory baseline.
+- **Results** — from the analyst's results document. One paragraph per analysis: what was
+  examined, the result (point estimate + uncertainty in one sentence), and a pointer to the
+  supporting figure/table, with just enough reading of the table/statistic to be understood. The
+  map and PCA appear here. **No discussion** in this section.
 
 ### Step 3.1 — Inline figure and table placement (mandatory)
 
-Each `save_fig()` / `save_tbl()` produces a sibling `.md` caption snippet in `outputs/`. When drafting Results:
+Each `save_fig()`/`save_tbl()` produced a sibling `.md` caption snippet in `outputs/`. When
+drafting Results:
 
-1. **Reference first, insert second.** Cite the artefact in prose using `@fig:…` / `@tbl:…` at the point in the argument where the reader needs it.
-2. **Inject the snippet immediately after the paragraph that first references it**, by reading the sibling `.md` file and pasting its contents verbatim. Do not retype the caption or restate the path. One blank line above and below the snippet.
-3. **Each artefact is injected exactly once.** Subsequent mentions in Strategy or Executive Summary use the cross-reference only.
-4. Floats may move to the next page break, but never appear before their first reference (enforced by `\usepackage{flafter}` at render time).
-5. Every Analyst artefact must be either injected or explicitly demoted to a `## Supplementary tables` section. An orphaned figure file is an error.
+1. **Reference first, insert second.** Cite the artefact in prose with `@fig:…`/`@tbl:…` where
+   the reader needs it.
+2. **Inject the snippet immediately after the paragraph that first references it**, by reading
+   the sibling `.md` file and pasting it verbatim (one blank line above and below). Do not
+   retype the caption or path.
+3. **Each artefact is injected exactly once;** later mentions use the cross-reference only.
+4. A colour-coded relatedness/pairwise matrix is a **heatmap image** via `save_fig()`, not a
+   plain `save_tbl()` table.
+5. Every analyst artefact is injected or explicitly demoted to a `## Supplementary tables`
+   section. An orphaned figure file is an error.
 
-**One report-specific note.** Reports often need a **colour-coded relatedness or pairwise matrix** rendered as a heatmap (cells filled by value), not a plain pandoc table. Save these via `save_fig()` (heatmap image), not `save_tbl()` (plain table). Reserve `save_tbl()` for tables whose value is in the literal numbers, not in the colour pattern.
-
-### Step 3 closing pass — prompt-coverage cross-reference (mandatory)
-
-A hard gate. Audit the draft against `outputs/prompt_coverage_table.md`:
-
-1. **Question coverage.** For every Qi, confirm the named deliverable section (typically a Strategy principle) addresses it substantively, names specific individuals where applicable, and is not hedged with "future work".
-2. **Fact consistency.** Read the Executive Summary and the Strategy side-by-side with the binding-facts column. Every recommendation must be checked against every fact that constrains it. The Executive Summary is the highest-risk regression site.
-3. **Cross-principle coupling.** For each Strategy principle, list the actions/decisions it recommends. Then, for each action, ask: does any *other* principle prescribe an action whose precondition is denied by this one? Two patterns to look for:
-   - **Disposition vs use.** Principle A says "release/discard X" (or "no genetic case to retain X"); Principle B prescribes a use of X that requires X to be retained or curated. Either A is contingent on B not happening, or B is contingent on A not happening — write the conditionality into both principles, do not assert them flatly.
-   - **Resource vs allocation.** Principle A says "the only deposit is Y"; Principle B prescribes a method that consumes more of Y than Y exists. Reconcile the budget.
-   The Executive Summary inherits both errors and is the most common regression site for them. The most reliable fix is to invert one principle from "do X" to "if precondition P holds, do X; otherwise do Y", with P named explicitly.
-4. **Record the audit.** Append a `## Prompt-coverage audit` section to `outputs/citation_provenance.md` (or write a sibling `outputs/prompt_coverage_audit.md`). Include a coupling sub-section listing every (Principle A, Principle B) pair that touches the same individual, dataset, or resource.
-
-The critic should not see a draft until question coverage, fact consistency, and cross-principle coupling are all clean.
+Save the partial draft as `outputs/report_draft.md` as you go.
 
 ---
 
-## Step 4 — Substance + coverage critique cycles (substance first)
+## Step 4 — Write Preamble, Discussion, Executive Summary; consolidate References
 
-Critics run in two stages. Stage one is **substance + coverage**, with up
-to three feedback cycles. Stage two (Step 5) is writing + citations,
-which run only after stage one is settled. Reason: substance fixes
-restructure prose and recompose citations, so polishing prose or
-verifying claims against a draft that is about to be rewritten wastes
-work and risks reverting fixes the substance critic asked for.
+- **Preamble** — condense the ecologist, conservationist, and geneticist briefings into 3–4
+  paragraphs (per `./report_template.md`), ending with the "Here we [verb] [deliverable]"
+  bridge sentence.
+- **Discussion** — interpret each material finding against the primary literature (lit-search-a)
+  and the conservation context (lit-search-b): concordance/conflict with published work, what
+  the results imply for the focal taxon and the questions, and the analysis limitations. The
+  Discussion supplies the reasoning that justifies the recommendations.
+- **Executive Summary** — draft **last**: a concise precis of results and conclusions, then a
+  **Recommendations** block naming specific individuals/populations/sites where a question
+  implies a decision, then the house-style closing sentence (weigh genetics alongside the
+  client's other factors). No recommendation may contradict a binding fact.
+- **Brief** and **Variation to the Brief** — verbatim from intake.
+- **References** — merge the references from all three briefings plus any added during assembly,
+  de-duplicate, alphabetise by first-author surname, and format per `reference-style-1`. Save
+  the consolidated provenance log as `outputs/citation_provenance.md`; add a provenance row at
+  the moment you introduce any new citation.
 
-Spawn both stage-one critics in parallel via a single message with two
-Agent calls:
+### Step 4 closing pass — prompt-coverage cross-reference (mandatory gate)
 
-- **`critic-substance`** — methods, parameter choices, calibration of interpretation, traceability from results to recommendations (the report-specific lens emphasises **client-defensibility**: are recommendations concrete? Do they name specific individuals? Is Strategy consistent with Executive Summary and Brief?). Reads `./playbook.md` Appendix B for the flags table. Output: `outputs/substance_audit.md`.
-- **`critic-coverage`** — confirms every Qi is addressed substantively, named individuals named, binding facts honoured, and that no Strategy principle contradicts another (especially: a recommendation in one principle whose precondition is denied in another — see Step 3 closing pass). Reads `outputs/prompt_coverage_table.md` and `jobs/<slug>/brief.yaml`. Output: `outputs/coverage_audit.md`.
+Audit the draft against `outputs/prompt_coverage_table.md` before any critic sees it:
 
-Hold `critic-writing` and `critic-citations` for Step 5.
-
-The critics never edit the draft. Each returns its audit as markdown; you (the coordinator) write each file to `outputs/` and apply revisions to `report_draft.md`.
-
-**Coordinator guard against critic over-reach.** When applying critic revisions, never demote a client-explicit question to "future work" or remove it. If a critic argues an answer is unsupported by the analysis, the correct action is to strengthen the supporting analysis or add a calibrated caveat — not to delete the answer.
-
-**Stopping rule: hard cap at three cycles.** Stop earlier when both stage-one critics return "no blocking issues" on the same cycle. Save `outputs/report_draft.md` after each revision (overwriting). Regardless of cap or early sign-off, proceed to Step 5 for prose-and-citation finishing before rendering.
+1. **Question coverage.** For every Qi, confirm its finding (Results), interpretation
+   (Discussion), and recommendation (Executive Summary, where applicable) are present,
+   substantive, named where applicable, and not hedged with "future work".
+2. **Fact consistency.** Read the Executive Summary and the recommendations against the
+   binding-facts column. Every recommendation is checked against every fact that constrains it.
+3. **Cross-recommendation coupling.** For each recommendation, list the actions it implies; for
+   each action, check whether another recommendation's precondition is denied by it (disposition
+   vs use; resource vs allocation). The reliable fix is to make one recommendation conditional —
+   "if precondition P holds, do X; otherwise Y" — with P named.
+4. **Record the audit** in `outputs/prompt_coverage_audit.md`, including a coupling sub-section.
 
 ---
 
-## Step 5 — Writing + citations finishing pass
+## Step 5 — Critic review cycles (hard cap: 3)
 
-Stage two: spawn both finishing critics in parallel via a single message
-with two Agent calls. One pass each, not iterated — by this point the
-substance is locked. If either pass surfaces a substance-grade issue
-(e.g. a citation that contradicts the carrying claim and forces a
-prose change beyond a one-sentence rewrite), kick back to Step 4 with
-that issue named, do not paper over it.
+Spawn all four critics **in parallel, in a single message with four Agent calls**:
 
-- **`critic-writing`** — `clear-writing` plus `reference-style-1`, capped at 15 prose rewrites. Output: `outputs/writing_audit.md`.
-- **`critic-citations`** — runs both passes (`citation-check` for existence + metadata, `claim-check` for assertion vs source) against the now-stable prose. Reads `jobs/<slug>/references/` for local PDF overrides; falls back through Unpaywall → preprint → abstract → "paywalled — manual check needed". Output: `outputs/citations_audit.md`.
+- `critic-coverage` — every Qi answered substantively; named individuals; binding facts
+  honoured; no recommendation contradicts another. Reads `outputs/prompt_coverage_table.md` and
+  `jobs/<slug>/brief.yaml`. → `outputs/coverage_audit.md`.
+- `critic-substance` — methods, parameter choices, assumption respect, calibration, and
+  results→recommendation traceability. Reads `./playbook.md` Appendix B. →
+  `outputs/substance_audit.md`.
+- `critic-citations` — `citation-check` (existence + metadata) and `claim-check` (claim vs
+  source) against the draft. Reads `jobs/<slug>/references/` for local PDF overrides. →
+  `outputs/citations_audit.md`.
+- `critic-writing` — `clear-writing` + `reference-style-1`, ≤15 rewrites. →
+  `outputs/writing_audit.md`.
 
-Then run a final coordinator pass yourself (do not delegate):
+The critics never edit the draft. You write each audit to `outputs/` and apply the revisions to
+`report_draft.md`. **Address deficiencies with the help of the other subagents where needed** —
+re-engage the ecologist/geneticist/conservationist to source a missing or mis-cited reference,
+or the analyst to add or strengthen an analysis. Apply fixes in priority order: substance and
+coverage first (they restructure prose and recompose citations), then citations, then writing.
 
-- **Provenance cross-check.** Confirm every in-text citation in `outputs/report_draft.md` has a matching row in `outputs/citation_provenance.md`. Resolve ungrounded citations either by tracing to a source (and adding the row) or by deleting the citation. Drop orphan provenance rows.
-- **Final prompt-coverage check.** Re-verify, for every Qi, that the report still addresses it substantively. For every binding fact, re-verify no recommendation in the Executive Summary or Strategy contradicts it. The earlier critic-coverage audit is the baseline — list any regression introduced since.
-- **Substance regressions.** Confirm no substantive concern raised by `critic-substance` in earlier cycles remains unaddressed.
+**Coordinator guard against critic over-reach.** Never demote a client-explicit question to
+"future work" or delete it. If a critic argues an answer is unsupported, strengthen the
+supporting analysis or add a calibrated caveat — do not remove the answer.
 
-Apply citation-check corrections to the reference list, to in-text citations affected by the corrections, and to the matching rows in `outputs/citation_provenance.md`. For `claim-check` verdicts:
+For `claim-check` verdicts: `supported` → no action; `partially supported`/`contradicted` →
+rewrite the carrying sentence to match the source; `paywalled — manual check needed` → flag in
+`citations_audit.md` and either ask the user to drop a PDF into `jobs/<slug>/references/<key>.pdf`
+and rerun, or accept it as unverifiable and note it in the caveats.
 
-- `supported` → no action.
-- `partially supported` or `contradicted` → rewrite the carrying sentence to match the source's actual claim, using the suggested rewrite from the audit table as a starting point.
-- `paywalled — manual check needed` → flag in `outputs/citations_audit.md` and either (a) ask the user to drop a PDF into `jobs/<slug>/references/<key>.pdf` and rerun `claim-check` for that key, or (b) accept the assertion as unverifiable and note it in the report's caveats.
-
-The citation-check skill writes its own `outputs/citation_check_changes.md` log when run in batch-apply mode (see `citation-check` SKILL.md auto-apply guard).
+**Stopping rule.** Stop early when all four critics return "no blocking issues" on the same
+cycle. Otherwise revise and re-run, to a **hard cap of three cycles**. Save
+`outputs/report_draft.md` after each revision (overwriting).
 
 ---
 
 ## Step 6 — Render the final Word document
 
-The Biomatix deliverable is a single editable `.docx` (`outputs/report_final.docx`). The user always sweeps the output in Word before sending to the client, so a PDF is not produced — the PDF render path was removed from this skill on 2026-05-03. If a client specifically asks for a PDF, the user produces it themselves from the final reviewed Word file.
-
-The render pipeline reuses three pre-built artefacts in `./assets/`:
-
-- `biomatix_cover_template.docx` — the literal cover page (logo + title + recipient + date + photo + ABN footer + citation block on page 2). Carries five placeholder tokens (`{{TITLE}}`, `{{RECIPIENT}}`, `{{DATE}}`, `{{PHOTO_CREDIT}}`, `{{CITATION}}`) and a swappable `image2.jpeg`. See `./assets/biomatix_cover_template.README.md` for the placeholder map.
-- `biomatix_template.docx` — the body reference-doc (A4, 2.5 cm margins, pandoc-default style names that pandoc populates with the converted markdown). See `./assets/biomatix_template.README.md`.
-- `./scripts/render_word_report.R` — the orchestration script, exporting `render_word_report(slug)`.
+The Biomatix deliverable is a single editable `outputs/report_final.docx` (the user sweeps it in
+Word before sending; no PDF is produced). The render reuses three pre-built artefacts in
+`./assets/`: `biomatix_cover_template.docx` (placeholders `{{TITLE}}`, `{{RECIPIENT}}`,
+`{{DATE}}`, `{{PHOTO_CREDIT}}`, `{{CITATION}}` + a swappable `image2.jpeg`),
+`biomatix_template.docx` (body reference-doc), and `./scripts/render_word_report.R`.
 
 ### 6.1 Run the render
 
@@ -316,29 +388,28 @@ source(".claude/skills/popgen-report/scripts/render_word_report.R")
 render_word_report("<slug>")
 ```
 
-The function:
+The function reads `brief.yaml`, builds the per-job cover (placeholder substitution + photo
+swap → `outputs/_cover.docx`), runs pandoc on `outputs/report_draft.md` with
+`--filter pandoc-crossref` and `--reference-doc=biomatix_template.docx` →`outputs/_body.docx`,
+and concatenates cover + body → `outputs/report_final.docx`. Pandoc-crossref renders `Figure 1`,
+`Table 1` labels; the reference-before-snippet ordering from Step 3.1 keeps each float at or
+after its first reference. The auto-citation follows
+`Surname, I. (Year). Title. Report to Client. DD-Mon-YYYY.` from `lead_author`, `project.title`,
+`client.name`, and `deliverables[0].deadline`.
 
-1. Reads `jobs/<slug>/brief.yaml` for client, project title, deadline, lead author, cover photo path and photographer.
-2. Builds the per-job cover by unzipping `biomatix_cover_template.docx`, substituting the five placeholders in `word/document.xml`, swapping `word/media/image2.jpeg` with the photo at `cover_photo.path`, and re-zipping into `outputs/_cover.docx`.
-3. Runs pandoc on `outputs/report_draft.md` with `--filter pandoc-crossref` and `--reference-doc=biomatix_template.docx`, producing `outputs/_body.docx`.
-4. Concatenates cover + body via `officer::body_add_docx` into `outputs/report_final.docx`.
+### 6.2 Verify, then hand to the user
 
-Cross-references via pandoc-crossref produce `Figure 1`, `Table 1`-style labels in the Word output. Pandoc emits inline images at the markdown position, so the figure-after-first-reference convention from Step 3.1 is preserved without further work — there is no Word-side equivalent of LaTeX's `flafter`, but the reference-followed-by-snippet ordering in the markdown delivers the same outcome.
+Open `outputs/report_final.docx` and verify:
 
-The auto-generated citation follows the pattern `Surname, I. (Year). Title. Report to Client. DD-Mon-YYYY.` from `lead_author`, `project.title`, `client.name`, and `deliverables[0].deadline` in `brief.yaml`. If `lead_author` is omitted the citation falls back to a year-only attribution.
+1. Cover page correct (logo, title, recipient, photo + credit, Biomatix address/ABN/email).
+2. Page 2 is the citation block.
+3. Body sections in the `./report_template.md` order (Title H1, then `## EXECUTIVE SUMMARY`,
+   `## BRIEF`, `## VARIATION TO THE BRIEF`, `## PREAMBLE`, `## MATERIALS AND METHODS`,
+   `## RESULTS`, `## DISCUSSION`, Acknowledgements, References).
+4. Every figure/table at or after its first reference; captions auto-numbered and matching the
+   `@fig:`/`@tbl:` cross-references.
+5. Reference list in CSIRO Harvard, alphabetised.
+6. Tables are editable Word tables, not images.
 
-### 6.2 Verify
-
-After rendering, open `outputs/report_final.docx` in Word and verify:
-
-1. Cover page renders correctly (logo present, title legible, recipient line correct, photo and credit in place, Biomatix address + ABN + email at bottom).
-2. Page 2 is the citation block (`Citation: <auto-generated entry>`).
-3. Body sections appear in the order specified in `./report_template.md` (Title H1, then `## EXECUTIVE SUMMARY` etc.).
-4. Every figure and table appears in the body at or after its first reference (carried from the markdown ordering set in Step 3.1).
-5. Captions are auto-numbered (`Figure 1.`, `Table 1.`, …) and match the `[@fig:…]` / `[@tbl:…]` cross-references in the prose.
-6. Reference list is in CSIRO Harvard format and alphabetised.
-7. Tables are **editable Word tables** (click a cell, see the table-tools ribbon), not pasted images.
-
-If the cover photo is missing, check that `cover_photo.path` in `brief.yaml` resolves from the project root and that the file exists. The render warns but does not fail when the photo is missing — the cover renders with the previous occupant of `image2.jpeg`.
-
-Report the final path (`outputs/report_final.docx`) to the user.
+If the cover photo is missing, the render warns (it does not fail) — check `cover_photo.path` in
+`brief.yaml`. Report the final path (`outputs/report_final.docx`) to the user.

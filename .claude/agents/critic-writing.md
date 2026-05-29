@@ -29,7 +29,7 @@ Apply the principles in `.claude/skills/clear-writing/SKILL.md`:
 
 Pick the **15 worst offenders only** for full rewrites. Quote the sentence as it stands and provide the rewrite. Anchor each by section and paragraph.
 
-For pattern-level issues that recur (e.g. "the report uses 'utilise' for 'use' throughout", "every Strategy paragraph opens with 'It is recommended that'"), list the pattern once with two or three example anchors. Do not repeat the rewrite for every instance.
+For pattern-level issues that recur (e.g. "the report uses 'utilise' for 'use' throughout", "every Recommendations bullet opens with 'It is recommended that'"), list the pattern once with two or three example anchors. Do not repeat the rewrite for every instance.
 
 ### Pass 2 — reference formatting (reference-style-1)
 

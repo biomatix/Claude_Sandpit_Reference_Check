@@ -135,10 +135,14 @@ Validate inputs at the start of every function using the dartRverse utility func
 
 When producing any text output — reports, summaries, interpretations, manuscript sections, or other written documents — apply the principles defined in the project skills:
 
+- **`/lit-search-a`** — search the primary published (peer-reviewed) literature for a focal taxon; returns cited facts with resolved metadata. Used by the ecologist and geneticist agents.
+- **`/lit-search-b`** — search the grey/government conservation literature (IUCN Red List always; national/sub-national statutory listings, recovery plans, submissions per the job's jurisdiction). Used by the conservationist agent.
 - **`/clear-writing`** — general prose quality, economy of expression, grammar, and style.
 - **`/reference-style-1`** — CSIRO Harvard referencing format for in-text citations and the reference list.
 - **`/citation-check`** — verify that every reference in the list points to a real publication and that the metadata matches the published record (existence and metadata only).
 - **`/claim-check`** — verify that the cited paper actually supports the in-text assertion that cites it (assertion vs source; complements `/citation-check`, distinct scope).
+
+The report is produced by the `popgen-report` skill, which acts as **Orchestrator** over persistent production agents in `.claude/agents/`: `ecologist`, `conservationist`, `geneticist` (concurrent briefings), then `planner` (with user sign-off) and `analyst`. The report follows a scientific-paper structure — Executive Summary (with recommendations) → Brief → Variation → Preamble → Materials and Methods → Results → Discussion → References.
 
 For end-to-end review of a draft, four persistent critic subagents in `.claude/agents/` run as a quartet (typically via `/review`):
 

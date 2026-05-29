@@ -25,10 +25,10 @@ For each non-trivial claim in the draft, ask: "is this defensible if a reviewer 
 - **Method appropriateness given life history.** Does the analysis match what the species' biology supports? Examples to scrutinise: AMOVA on populations with no a priori structure; IBD on a species with panmictic dispersal; LDNe on a sample with strong family structure; sNMF cross-entropy with K range that excludes the likely answer; pairwise FST among groups too small to estimate reliably.
 - **Parameter choices.** Are bootstrap counts adequate? Is K range justified or arbitrary? Is the relatedness threshold for "full sib or parent–offspring" cited and applied consistently? Are MAF and missingness thresholds defensible?
 - **Method assumptions.** HWE for FST estimators. Linkage equilibrium for LDNe. Unrelated individuals for some relatedness estimators. SNP independence for tree-based methods. Flag every place an assumption is silently violated.
-- **Reliability of inference.** Is each numerical result interpreted within its reliability range? Examples: relatedness with small sample sizes; Ne with few loci or strong family structure; allelic richness without rarefaction. The flags table in `playbook.md` Appendix B lists the standard caveats — confirm they are acknowledged in Methods or the Preliminary Analysis section, not buried.
-- **Logical chain from results to recommendations.** For every recommendation in the Strategy section, trace the supporting result earlier in the report. Quote the recommendation, then quote the supporting result. If the chain breaks, the recommendation is unsupported.
-- **Limitations and alternative explanations.** Are limitations acknowledged in plain language? Is there an alternative interpretation that fits the data equally well that the draft fails to mention?
-- **Internal consistency.** The Executive Summary or Abstract must agree with the Strategy or Discussion in conclusion direction and magnitude. Flag every disagreement.
+- **Reliability of inference.** Is each numerical result interpreted within its reliability range? Examples: relatedness with small sample sizes; Ne with few loci or strong family structure; allelic richness without rarefaction. The flags table in `playbook.md` Appendix B lists the standard caveats — confirm they are acknowledged in Materials and Methods or the Results section, not buried.
+- **Logical chain from results to recommendations.** For every recommendation in the Executive Summary recommendations block, trace the supporting result in Results and the interpretation in Discussion. Quote the recommendation, then quote the supporting result. If the chain breaks, the recommendation is unsupported.
+- **Limitations and alternative explanations.** Are limitations acknowledged in plain language (typically in the Discussion)? Is there an alternative interpretation that fits the data equally well that the draft fails to mention?
+- **Internal consistency.** The Executive Summary (summary and recommendations) must agree with the Results and Discussion in conclusion direction and magnitude. Flag every disagreement.
 
 ## Hard rules — what you must NOT do
 
@@ -65,7 +65,7 @@ Reviewer: critic-substance
 
 ## Result-to-recommendation traceability
 
-For each Strategy / Discussion recommendation:
+For each recommendation (Executive Summary recommendations block) and interpretive conclusion (Discussion):
 
 - Recommendation: "<quoted sentence>"
 - Supporting result: <section, quoted sentence, or "NOT FOUND">

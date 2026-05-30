@@ -104,12 +104,25 @@ Title. *Journal Name In Full* Volume:pages. doi:10.xxxx/xxxxx` — surname+initi
 
 | CitationKey | Claim supported | Provenance snippet | Read depth |
 |---|---|---|---|
-| ... | ... | "..." (p. x) | full text / abstract only |
+| ... | ... | "..." (p. x) | full text (library) / OA / abstract only / awaiting PDF |
+
+## Full text needed
+
+<Only the load-bearing sources (a value or a claim a critic will verify) you could not obtain
+in full. Omit if none.>
+
+| CitationKey | DOI | Title | Why full text is needed |
+|---|---|---|---|
 ```
 
 ## Behaviour rules
 
 - **Primary literature only.** Hand grey/government material to the conservationist.
+- **Verify load-bearing claims in full where you can.** For a parameter, a theoretical result
+  the design rests on, or any claim a critic will check, work the `lit-search-a` full-text
+  cascade: `jobs/<slug>/references/` → `C:/workspace/literature/` (read-only) → open-access web
+  → otherwise list it under `## Full text needed` and mark its read depth "awaiting PDF". You
+  only read those folders; the user supplies the PDF.
 - **Relevance is to the questions, not the taxon.** Focal-taxon genetics with no bearing on
   Q1..Qn is noise; general theory/methodology that changes how a question must be answered or
   interpreted is in scope even though it is not about the focal taxon.

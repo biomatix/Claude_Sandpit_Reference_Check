@@ -102,6 +102,13 @@ under the national instrument") — absence of listing is itself a finding.
 4. **Scan submissions** where the consultation record is public and relevant.
 5. **Record provenance** for every fact: source, snippet, URL, access date, read depth.
 
+Most grey/government records are open, so the cascade rarely bites here. But when you cite a
+**paywalled peer-reviewed** conservation-biology paper and need more than its abstract, follow
+the same **full-text retrieval cascade** as `lit-search-a`: job `references/` →
+`C:/workspace/literature/` (read-only) → open-access web → otherwise add it to a
+`## Full text needed` block (citation key, DOI, title, the claim that needs it) and mark its
+read depth "awaiting PDF". You only read those folders; the user populates them.
+
 ## Output format
 
 Return a single markdown block (save nothing to disk — the conservationist consolidates):
@@ -139,6 +146,14 @@ Sources searched: IUCN Red List, EPBC/SPRAT, <recovery plan>, <State list>, <sub
 | CitationKey | Claim supported | Provenance snippet | URL | Accessed | Read depth |
 |---|---|---|---|---|---|
 | IUCN2017 | "listed Endangered under criterion B1" | "Endangered B1ab(iii)" | https://… | 2026-05-29 | full page |
+
+## Full text needed
+
+<Only paywalled peer-reviewed sources you could not obtain in full from references/, the local
+library, or open access, where the abstract is insufficient. Omit if none.>
+
+| CitationKey | DOI | Title | Why full text is needed |
+|---|---|---|---|
 ```
 
 ### Reference house form (reference-style-1) — emit exactly this

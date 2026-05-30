@@ -56,6 +56,10 @@ species determination resolves it.
 - External binary paths (NeEstimator, pandoc-crossref) and their R-option mappings.
 - The sibling skills `lit-search-a`, `lit-search-b`, `clear-writing`, `reference-style-1`,
   `citation-check`, `claim-check`.
+- The user's **shared literature library** at `C:/workspace/literature/` (read-only;
+  cross-job; granted via `additionalDirectories` in settings). Full-text retrieval cascade for
+  every literature-reading role: `jobs/<slug>/references/` → `C:/workspace/literature/` →
+  open-access web → otherwise request the PDF from the user (see *Full-text requests* below).
 
 ---
 
@@ -235,6 +239,23 @@ extract for the planner: the ecologist's **life-history parameter table**, the g
 The briefings inform the **Preamble** and **Discussion** (not a journal Introduction). They are
 concise, decision-relevant context — most reports use only ~30% of each briefing.
 
+### Full-text requests (cross-cutting)
+
+A briefing (or, at Step 5, `claim-check`) may end with a **`## Full text needed`** block — the
+load-bearing sources it could not obtain in full from `jobs/<slug>/references/`, the shared
+library `C:/workspace/literature/`, or open access. When any agent returns such a block:
+
+1. **Collect and de-duplicate** the requests across all agents (one row per DOI).
+2. **Relay them to the user as one batch**: list each citation key, DOI, title, and the
+   parameter/claim that needs it, and ask the user to download the PDFs and drop them into
+   `jobs/<slug>/references/` (named `<citation_key>.pdf`) or add them to the shared library.
+3. **Re-run only the affected step** once the PDFs arrive — re-spawn the briefing agent (or
+   re-run `claim-check`) for those keys so the provenance upgrades from "awaiting PDF" to full
+   text. Do not block the rest of the pipeline waiting on a PDF the report does not yet need;
+   batch the request and continue where you can.
+
+The harness never writes to `references/` or the library — the user owns both; agents only read.
+
 ---
 
 ## Step 2 — Planner (Human gate 2), then Analyst
@@ -345,7 +366,10 @@ Spawn all four critics **in parallel, in a single message with four Agent calls*
   results→recommendation traceability. Reads `./playbook.md` Appendix B. →
   `outputs/substance_audit.md`.
 - `critic-citations` — `citation-check` (existence + metadata) and `claim-check` (claim vs
-  source) against the draft. Reads `jobs/<slug>/references/` for local PDF overrides. →
+  source) against the draft. For full text, `claim-check` works the cascade
+  `jobs/<slug>/references/` → `C:/workspace/literature/` → open access; any `paywalled — manual
+  check needed` verdict on a load-bearing claim becomes a **Full-text request** (handle per the
+  *Full-text requests* block in Step 1 — batch to the user, then re-check those keys). →
   `outputs/citations_audit.md`.
 - `critic-writing` — `clear-writing` + `reference-style-1`, ≤15 rewrites. →
   `outputs/writing_audit.md`.

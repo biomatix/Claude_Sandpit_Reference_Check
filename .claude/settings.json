@@ -73,8 +73,10 @@
       "WebFetch(domain:www.environment.nsw.gov.au)",
       "WebFetch(domain:environment.nsw.gov.au)",
       "WebFetch(domain:wildnet.science-data.qld.gov.au)",
-      "WebFetch(domain:en.wikipedia.org)"
-    ]
+      "WebFetch(domain:en.wikipedia.org)",
+      "Read(C:/workspace/literature/**)"
+    ],
+    "additionalDirectories": ["C:/workspace/literature"]
   },
   "env": {
     "CLAIM_CHECK_EMAIL": "arthur.georges@biomatix.com.au"

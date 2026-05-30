@@ -96,13 +96,26 @@ Title. *Journal Name In Full* Volume:pages. doi:10.xxxx/xxxxx` — surname+initi
 
 | CitationKey | Claim supported | Provenance snippet | Read depth |
 |---|---|---|---|
-| ... | ... | "..." (p. x) | full text / abstract only |
+| ... | ... | "..." (p. x) | full text (library) / OA / abstract only / awaiting PDF |
+
+## Full text needed
+
+<Only the load-bearing sources (a parameter value or a claim that must be verified) you could
+not obtain in full. Omit if none.>
+
+| CitationKey | DOI | Title | Why full text is needed |
+|---|---|---|---|
 ```
 
 ## Behaviour rules
 
 - **Primary literature only.** A relevant government plan or IUCN assessment goes to the
   conservationist — note it exists, do not cite it.
+- **Don't draw a parameter from an abstract you can verify in full.** For any load-bearing
+  source (a life-history value, or a claim a critic will check), work the `lit-search-a`
+  full-text cascade: `jobs/<slug>/references/` → `C:/workspace/literature/` (read-only) →
+  open-access web → otherwise list it under `## Full text needed` and mark its read depth
+  "awaiting PDF". You only read those folders; the user supplies the PDF.
 - **No fabrication.** Every reference resolves to a real record; exclude what you cannot verify.
 - **Numbers carry sources.** No bare life-history values.
 - **Concise.** You feed a briefing (≤ ~1500 words excluding tables), not a systematic review.

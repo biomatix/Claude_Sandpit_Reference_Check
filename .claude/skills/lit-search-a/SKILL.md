@@ -107,12 +107,49 @@ say so explicitly — that itself is information the planner needs.
    if you cite a paper more than once, or two findings point to the same DOI, the author/year/
    pages must be byte-identical every time. Discard any candidate you cannot resolve to a real
    record — never pass through an unverifiable reference.
-4. **Read for facts.** Fetch the abstract; fetch open-access full text where available
-   (publisher OA, preprint mirror, or a local PDF in `references/`). Extract the specific
+4. **Read for facts — follow the full-text retrieval cascade below.** Extract the specific
    facts and parameter values that bear on the scope and questions.
-5. **Record provenance.** For every fact, capture the source and a short supporting snippet
-   (a quoted sentence or a tight paraphrase with the location). A fact whose source you only
-   read in abstract should say "(abstract only)" so the calling agent can calibrate.
+5. **Record provenance.** For every fact, capture the source, a short supporting snippet
+   (a quoted sentence or a tight paraphrase with the location), and the **read depth /
+   retrieval tier** (full text — references/ | full text — local library | full text — OA |
+   abstract only | awaiting PDF) so the calling agent can calibrate.
+
+### Full-text retrieval cascade (when you need more than the abstract)
+
+A claim is **load-bearing** when a quantitative parameter is drawn from it or a downstream
+`claim-check` must verify it. For load-bearing claims, do not settle for the abstract — work
+the cascade in order and stop at the first tier that yields the full text:
+
+1. **Job references folder** — `jobs/<slug>/references/`. `Glob` it and read any PDF that
+   matches the source (by `<CitationKey>.pdf`, or by first-author surname + year). This is
+   where the user places PDFs you have requested.
+2. **Shared local library** — `C:/workspace/literature/` (read-only; the user's
+   subscription-sourced library, reused across jobs). Identify a matching PDF in two passes:
+   - **Filename pass (cheap, first).** `Glob` the library recursively and select any PDF whose
+     filename or path contains the first-author surname **and** year (or the DOI).
+   - **First-page pass (fallback, filename-agnostic).** If the filename pass yields no confident
+     match — filenames are opaque, hashed, or scanned-in — **read the first page of candidate
+     PDFs** with the Read tool (`pages: "1"`). The first page almost always carries the title,
+     author list, year, and often the DOI — enough to identify the paper. Narrow candidates
+     first where you can (filenames sharing any token — surname, a title word, or the year); if
+     filenames carry no usable token at all, scan first pages, but **cap the scan at ~40 PDFs
+     per source** and, if the library is larger and unindexed, stop and fall through to tier 3/4
+     rather than reading hundreds of files — and note in your output that the library would
+     benefit from descriptive filenames (`<Surname><Year>...`) or an index.
+   Confirm the match (title + first author + year agree) before reading the body. If two
+   candidates are plausible, prefer to request rather than cite the wrong paper.
+3. **Open-access web** — Unpaywall (uses `CLAIM_CHECK_EMAIL`) → PMC → preprint mirror →
+   publisher open-access → as a last automated step, the CrossRef/PubMed abstract.
+4. **Request the PDF from the user.** If the source is paywalled, load-bearing, and absent from
+   tiers 1–2, **do not cite the load-bearing claim from the abstract alone.** Add the source to
+   a **`## Full text needed`** block in your output (citation key, DOI, title, and the exact
+   parameter/claim that needs it) and mark its provenance read depth **"awaiting PDF"**. The
+   Orchestrator relays the request; the user drops the PDF into `jobs/<slug>/references/` and
+   the step re-runs.
+
+You only ever **read** `references/` and the library — never write to either; the user owns
+both. Background/context citations that do not carry a parameter or a verifiable assertion may
+remain "abstract only" without a request.
 
 ## Output format
 
@@ -146,7 +183,16 @@ with `[Preprint]`.>
 
 | CitationKey | Claim supported | Provenance snippet | Read depth |
 |---|---|---|---|
-| Smith2019 | "longevity exceeds 20 years" | "...individuals recaptured after 23 years..." (p. 4) | full text / abstract only |
+| Smith2019 | "longevity exceeds 20 years" | "...individuals recaptured after 23 years..." (p. 4) | full text (library) / OA / abstract only / awaiting PDF |
+
+## Full text needed
+
+<Only the load-bearing sources you could not obtain in full from references/, the local
+library, or open access. Omit this section if there are none.>
+
+| CitationKey | DOI | Title | Why full text is needed |
+|---|---|---|---|
+| Jones2018 | 10.xxxx/xxxx | ... | clutch-size parameter for the planner; abstract gives no number |
 ```
 
 ### Reference house form (reference-style-1) — emit exactly this

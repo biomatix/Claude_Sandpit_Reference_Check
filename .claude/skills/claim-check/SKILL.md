@@ -33,10 +33,12 @@ The drafts you audit are Biomatix consulting reports produced by `/popgen-report
 - Resolving each citation key to a DOI via the `.bib` file.
 - Retrieving cited content in this priority order:
   1. Local PDF at `jobs/<slug>/references/<citation_key>.pdf`, if present.
-  2. DOI → open-access PDF or HTML via the Unpaywall API.
-  3. Preprint mirror (bioRxiv, PMC, arXiv) where DOI maps to one.
-  4. CrossRef abstract (always available for resolvable DOIs).
-  5. PubMed abstract (biomedical only).
+  2. Shared local library `C:/workspace/literature/` (read-only) — `Glob` it recursively for a
+     PDF whose filename or path matches the source by first-author surname + year, or the DOI.
+  3. DOI → open-access PDF or HTML via the Unpaywall API.
+  4. Preprint mirror (bioRxiv, PMC, arXiv) where DOI maps to one.
+  5. CrossRef abstract (always available for resolvable DOIs).
+  6. PubMed abstract (biomedical only).
 - Comparing the carrying assertion against the retrieved passage and assigning a verdict.
 - Writing a per-claim audit table to `outputs/claims_audit.md`.
 
@@ -65,7 +67,7 @@ For each (assertion, citation) pair, return exactly one of:
 2. **partially supported** — retrieved text supports part of the assertion but the prose over-states or generalises it. Quote the supporting passage and explain the over-reach.
 3. **contradicted** — retrieved text says the opposite of what the prose claims, or restricts the claim to a context the prose ignores. Quote the contradicting passage.
 4. **not found in retrieved text** — full text was retrieved but the supporting passage was not present. Distinguishes from "paywalled" (text not available) and from "contradicted" (text says otherwise). State which sections of the source were searched.
-5. **paywalled — manual check needed** — full text was not retrievable through any channel (publisher paywall, no preprint, no open mirror) and the assertion cannot be verified from the abstract alone. This is a first-class verdict, not a hidden failure.
+5. **paywalled — manual check needed** — full text was not retrievable through any channel (job `references/`, the shared library `C:/workspace/literature/`, Unpaywall, preprint, open mirror) and the assertion cannot be verified from the abstract alone. This is a first-class verdict, not a hidden failure. The standing **suggested action** is for the user to download the PDF and drop it into `jobs/<slug>/references/<citation_key>.pdf` (or add it to the shared library), after which the claim is re-checked.
 
 **Honesty rules** — never report "supported" without quoting the supporting passage. Never silently downgrade "paywalled" to "supported" or "unverified". An assertion verifiable only from the abstract that is in fact supported by the abstract should be reported as `supported (abstract only)` so the reader knows the depth of evidence.
 
@@ -101,6 +103,8 @@ python .claude/skills/claim-check/scripts/resolve_full_text.py \
 ```
 
 The script returns JSON with `kind` (one of `local_pdf`, `open_access_pdf`, `open_access_html`, `preprint`, `abstract_only`, `not_found`), `text_path` (path to a `.txt` file with extracted text — written into `outputs/.claim_check_cache/`), and `source_url`. The cache lets repeat runs skip re-fetch.
+
+**Shared-library fallback (before declaring paywalled).** The script's `--local-dir` only matches `<citation_key>.pdf`, so it will not find the user's library where filenames differ. When the script returns `abstract_only` or `not_found` and the assertion needs full text, search the shared library `C:/workspace/literature/` in two passes: (1) **filename pass** — `Glob` `**/*.pdf` and pick the PDF matching by first-author surname + year (or DOI); (2) **first-page pass** — if no confident filename match, read the first page of candidate PDFs (`Read` with `pages: "1"`) to identify by title/authors/year/DOI, narrowing by any shared filename token first and capping at ~40 PDFs (if the library is larger and unindexed, stop and keep the paywalled verdict rather than scanning hundreds). On a confirmed match, **read it with the Read tool** and assess the claim against that text, recording `kind = local_pdf (library)`. The library is read-only — never copy into or write it. Only if neither pass finds the source does the claim stay paywalled.
 
 Mapping from `kind` to which verdicts are reachable:
 - `local_pdf`, `open_access_pdf`, `open_access_html`, `preprint` → all five verdicts reachable.

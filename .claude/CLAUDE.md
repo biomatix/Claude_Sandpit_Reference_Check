@@ -189,6 +189,10 @@ jobs/<client-short>-<species-short>-<YYYYMMDD>/
 
 The slug `<client-short>-<species-short>-<YYYYMMDD>` is enforced by `/new-job`. The `outputs/` subdirectory is the only path the analyst, coordinator, and critics may write to during a job.
 
+### 6.1.1 Shared literature library and the full-text retrieval cascade
+
+A cross-job, user-owned PDF library lives at `C:/workspace/literature/` (outside the sandpit; read access granted via `permissions.additionalDirectories`). Whenever a literature-reading role (the ecologist, conservationist, geneticist briefing agents, or `claim-check`) needs a paper's **full text** rather than its abstract, it works this cascade and stops at the first hit: (1) the job's `jobs/<slug>/references/`; (2) the shared library `C:/workspace/literature/` (matched by first-author surname + year or DOI in the filename, falling back to reading each candidate PDF's first page when filenames are uninformative); (3) open-access web (Unpaywall → PMC → preprint → publisher OA); (4) otherwise it records the source under a `## Full text needed` block and the Orchestrator asks the user to download the PDF into `jobs/<slug>/references/<citation_key>.pdf` (or add it to the library), after which the step re-runs. Only **load-bearing** sources (those supplying a parameter or a claim a critic must verify) trigger a request; background citations may remain abstract-only. The harness **only reads** `references/` and the library — the user owns and populates both; agents never write there.
+
 A new job is scaffolded with `/new-job <slug>`. The brief is then parsed with `/intake jobs/<slug>/brief.md`, which populates `brief.yaml`. From that point `/popgen-report` reads `brief.yaml` and writes into `jobs/<slug>/outputs/`.
 
 ### 6.2 R script and plot conventions

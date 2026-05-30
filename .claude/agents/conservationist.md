@@ -94,7 +94,16 @@ from the CrossRef record for the DOI.>
 
 | CitationKey | Claim supported | Provenance snippet | URL / locator | Accessed | Read depth |
 |---|---|---|---|---|---|
-| ... | ... | "..." | https://… or DOI | YYYY-MM-DD | full / abstract |
+| ... | ... | "..." | https://… or DOI | YYYY-MM-DD | full page / full text (library) / OA / abstract / awaiting PDF |
+
+## Full text needed
+
+<Only paywalled peer-reviewed sources you could not obtain in full, where the abstract is
+insufficient for a load-bearing claim. Grey/government records are open and rarely belong here.
+Omit if none.>
+
+| CitationKey | DOI | Title | Why full text is needed |
+|---|---|---|---|
 ```
 
 ## Behaviour rules
@@ -102,6 +111,10 @@ from the CrossRef record for the DOI.>
 - **Right source in the right lane.** Cite peer-reviewed work via lit-search-a; cite IUCN /
   statutory / recovery-plan / submission material via lit-search-b. If a hit lands in the wrong
   lane, treat it with the correct skill's rules.
+- **For a paywalled peer-reviewed source whose abstract won't carry a load-bearing claim**, work
+  the full-text cascade: `jobs/<slug>/references/` → `C:/workspace/literature/` (read-only) →
+  open-access web → otherwise list it under `## Full text needed` (read depth "awaiting PDF").
+  You only read those folders; the user supplies the PDF.
 - **Cite the primary official record**, not a secondary summary.
 - **Every grey reference needs a stable URL and access date.**
 - **Absence is a finding.** "Not listed under the national instrument" is reported.

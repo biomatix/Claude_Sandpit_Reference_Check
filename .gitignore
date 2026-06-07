@@ -1,27 +1,16 @@
 # ============================================================
-#  Claude_SandPit_Biomatix_Reports — .gitignore
-#  Tracks the harness (CLAUDE.md, skills, agents, hooks,
-#  commands, manual). Ignores all client work and per-machine
-#  state.
+#  Claude_SandPit_Reference_Check — .gitignore
+#  Tracks the harness (CLAUDE.md, skills, hooks, commands,
+#  manual). Ignores per-manuscript work, the PDF store, and
+#  per-machine state.
 # ============================================================
 
-# --- R session / RStudio state ------------------------------
+# --- R / editor session state -------------------------------
 .Rproj.user/
 .Rhistory
 .Rapp.history
 .RData
 .Ruserdata
-*.Rcheck/
-*.tar.gz
-*-Ex.R
-
-# --- renv (uncomment if you adopt renv later) ---------------
-# renv/library/
-# renv/local/
-# renv/cellar/
-# renv/lock/
-# renv/python/
-# renv/staging/
 
 # --- Per-machine Claude Code state --------------------------
 .claude/active_job
@@ -35,11 +24,10 @@
 memory/*
 !memory/.gitkeep
 
-# --- All client work (data, briefs, drafts, outputs) --------
-#  jobs/<slug>/ contains contract briefs, raw data, references,
-#  outputs, and per-job memory. None of it goes to GitHub even
-#  in a private repo. The directory itself does not need to be
-#  tracked; /new-job creates it on first use.
+# --- All per-manuscript work --------------------------------
+#  jobs/<slug>/ contains the draft, supplied PDFs, the audit,
+#  and per-job memory. None of it is tracked; /new-job creates
+#  it on first use.
 jobs/
 
 # --- Python bytecode (skills bundle .py helpers) ------------

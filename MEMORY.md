@@ -1,8 +1,12 @@
 # MEMORY.md — Project memory index
 
-This file is the project's memory index, read at session start per `.claude/CLAUDE.md` §7.1. It is empty in the proforma — entries accrue per job.
+This file is the project's memory index, read at session start per `.claude/CLAUDE.md` §5. It
+holds cross-job lessons for the reference-check harness (literature-access arrangements,
+recurring journal-style preferences, pointers to external systems). Per-manuscript state lives
+in `jobs/<slug>/memory/`.
 
-Add one line per memory file under the matching heading: `- [Title](path/to/file.md) — one-line hook`. Keep this index under 200 lines.
+Add one line per memory file under the matching heading: `- [Title](path/to/file.md) — one-line
+hook`. Keep this index under 200 lines.
 
 ## User
 
@@ -10,7 +14,7 @@ _(none yet)_
 
 ## Feedback
 
-_(none yet)_
+- [Literature access: Sci-Hub refused, ANU pending](memory/literature-access-scihub-anu.md) — Sci-Hub/Sci-Net is a firm no (don't rebuild); ANU institutional access agreed, auth-model decision pending.
 
 ## Project
 
@@ -18,4 +22,4 @@ _(none yet)_
 
 ## Reference
 
-_(none yet)_
+- [GitHub remote](memory/github_remote.md) — gh CLI is not installed on this machine; use plain git.

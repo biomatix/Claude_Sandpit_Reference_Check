@@ -1,6 +1,6 @@
 #requires -Version 5.1
 <#
-PreToolUse safety guard for the Biomatix popgen sandpit.
+PreToolUse safety guard for the reference-check sandpit.
 
 Purpose:
   1. Block Edit / Write / NotebookEdit tool calls whose target file is
@@ -15,11 +15,6 @@ Protocol:
   Reads the Claude Code hook JSON from stdin.
   Exits 0 to allow.
   Exits 2 with a reason on stderr to block (Claude sees the message).
-
-Out of scope:
-  R code dispatched via curl to the RStudio HTTP API at 127.0.0.1:8787
-  is not parsed. R session containment is enforced separately via
-  ~/.Rprofile wrappers if the user wants hard guarantees there.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -123,9 +118,9 @@ function Test-PathIsClaudeSystemFile {
 }
 
 function Test-PathIsTempFile {
-    # Carve-out for system temp directories. The harness frequently stages
-    # short-lived script files (R chunks, heredoc fragments) for the
-    # RStudio HTTP API and similar; these belong in TEMP, not the sandpit.
+    # Carve-out for system temp directories. The harness sometimes stages
+    # short-lived files (heredoc fragments, downloads in flight); these
+    # belong in TEMP, not the sandpit.
     # Allowed roots:
     #   - /tmp (POSIX / MinGW bash on Windows; matched on the RAW path
     #     because Windows GetFullPath silently rebases /tmp onto the

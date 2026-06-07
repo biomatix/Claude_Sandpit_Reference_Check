@@ -1,19 +1,17 @@
 ---
 name: lit-search-a
 description: >
-  Search the PRIMARY published (peer-reviewed) literature for material relevant to a
-  focal taxon and return cited facts with verified metadata and a provenance trail. Use
-  this skill whenever a briefing agent (ecologist, geneticist) — or the user directly —
-  needs to find, read, and cite peer-reviewed journal articles, books, book chapters,
-  theses, or preprints about a species or group of species: its ecology, life history,
-  genetics/genomics, or any quantitative parameter (longevity, age at first reproduction,
-  clutch/brood size, dispersal, sex-determination mode, karyotype). Fans out web and
-  database searches, fetches abstracts or open-access full text, extracts decision-relevant
-  facts, and resolves each source's metadata to a clean reference. Does NOT search grey or
-  government literature (IUCN, EPBC/SPRAT, recovery plans, submissions) — that is
-  `lit-search-b`. Does NOT verify an existing reference list (`citation-check`) or check a
-  claim against its source (`claim-check`); those are downstream audit skills this skill
-  feeds.
+  Search the PRIMARY published (peer-reviewed) literature on a topic or focal taxon and
+  return candidate sources with verified metadata and a provenance trail. Use this skill
+  whenever `/reference-check` — or the user directly — needs to (a) surface key published
+  works a manuscript appears to be MISSING, or (b) locate and resolve the metadata / full-text
+  PDF of a specific paper. Covers peer-reviewed journal articles, books, book chapters,
+  theses, and preprints, including any quantitative parameter where the manuscript's field is
+  ecology/genetics (longevity, age at first reproduction, clutch/brood size, dispersal,
+  sex-determination mode, karyotype). Fans out web and database searches, fetches abstracts or
+  open-access full text, and resolves each source's metadata to a clean reference. Does NOT
+  verify an existing reference list (`citation-check`) or check a claim against its source
+  (`claim-check`); those are the audit skills this one feeds.
 ---
 
 # Primary-literature search (lit-search-a)
@@ -21,31 +19,33 @@ description: >
 ## Role
 
 You search the **primary published literature** — peer-reviewed journal articles, scholarly
-books and chapters, theses, and preprints — for material about a **focal taxon** (a species
-or group of closely related species). You return two things:
+books and chapters, theses, and preprints — on a topic or about a **focal taxon** (a species
+or group of closely related species). You serve two purposes for `/reference-check`:
 
-1. **Decision-relevant facts**, each tied to the source that supports it and a verbatim or
-   close-paraphrase provenance snippet.
-2. **Clean references** for every source you cite, with metadata resolved against the
-   published record so the downstream `citation-check` pass finds nothing to fix.
+1. **Missing-reference scan** — surface well-known, load-bearing works a manuscript on this
+   topic omits (the foundational method paper, the standard reference for the study species, a
+   directly contradicting or superseding recent paper), each with a one-line reason it belongs.
+2. **Source location** — find a specific paper, resolve its metadata against the published
+   record so `citation-check` finds nothing to fix, and surface its full-text PDF so it can be
+   filed in `Literature/`.
 
-You are a feeder for the briefing agents (ecologist, geneticist) and, through them, the
-report's Preamble and Discussion. You do not write report prose; you return structured
-findings the calling agent consolidates.
+You do not write manuscript prose; you return structured findings the caller consolidates.
 
 ## Inputs you require
 
 The invoking message should give you:
 
-- **Focal taxon** — scientific name(s) and common name(s).
-- **Topic scope** — which of {ecology, life history, genetics/genomics} to cover, and any
-  specific parameters the planner needs (see the parameter checklist below).
-- **The client's questions** — so you can prioritise literature that bears on what the report
-  must answer.
-- Optional: a year floor (e.g. "1990 onwards"), a maximum number of sources, and any local
-  PDFs already in `jobs/<slug>/references/`.
+- **Topic and/or focal taxon** — the manuscript's subject, and the scientific/common name(s)
+  of any focal species.
+- **Topic scope** — which of {ecology, life history, genetics/genomics, methodology} to cover,
+  and any specific parameters to look for (see the parameter checklist below).
+- **The manuscript's key claims** — so you can prioritise literature that bears on what the
+  manuscript asserts (for the missing-reference scan).
+- Optional: a year floor (e.g. "1990 onwards"), a maximum number of sources, and any PDFs
+  already in `Literature/` or `jobs/<slug>/references/`.
 
-If the focal taxon is missing, stop and ask. Do not guess the species from context.
+If neither a topic nor a focal taxon is given, stop and ask. Do not guess the subject from
+context.
 
 ## Search sources (primary literature only)
 
@@ -58,6 +58,7 @@ Search broad, then resolve narrow. Use these sources, in roughly this order:
 | **Google Scholar** | WebSearch | broadest coverage; theses, books, non-indexed journals |
 | **bioRxiv / EcoEvoRxiv / preprint servers** | WebSearch + WebFetch | recent unpublished genetics/genomics; flag clearly as preprint |
 | **Publisher / journal pages** | WebFetch on the resolved URL | abstract, and open-access full text where available |
+| **Georges lab publications** | WebFetch `http://georges.biomatix.org/publications/all` | the publication list of A. Georges and collaborators — Australian freshwater turtles (incl. *Myuchelys*, *Emydura*, *Elseya*), reptile sex determination, conservation genetics. Often the primary source for focal-taxon parameters; check it whenever the focal taxon is an Australian reptile or A. Georges is a plausible author, then resolve each hit's metadata via CrossRef as usual. |
 | **Web search (general)** | WebSearch | finding the existence of a paper before resolving its metadata |
 
 Discovery is web-first (WebSearch to find candidate papers), metadata is database-first
@@ -71,7 +72,7 @@ This skill is **self-contained over web access**. It expects the calling agent t
 PubMed APIs directly via WebFetch (URLs above) — do not depend on external scripts. `Read` is
 used only to read any local PDF already placed in `jobs/<slug>/references/`.
 
-## Parameter checklist (for the planner)
+## Parameter checklist (when the manuscript's field is ecology/genetics)
 
 When the topic scope includes life history or genetics, actively hunt for these values, each
 with a source and a number (or an explicit "not found in the primary literature"):
@@ -89,7 +90,7 @@ with a source and a number (or an explicit "not found in the primary literature"
 - any analytical approach the primary literature has used successfully on this or a sister taxon
 
 A value with no source is not a finding. If the primary literature is silent on a parameter,
-say so explicitly — that itself is information the planner needs.
+say so explicitly — that itself is information the caller needs.
 
 ## Method
 
@@ -123,7 +124,12 @@ the cascade in order and stop at the first tier that yields the full text:
 1. **Job references folder** — `jobs/<slug>/references/`. `Glob` it and read any PDF that
    matches the source (by `<CitationKey>.pdf`, or by first-author surname + year). This is
    where the user places PDFs you have requested.
-2. **Shared local library** — `C:/workspace/literature/` (read-only; the user's
+2. **Claude cache** — `Literature/` (in the sandpit root). The harness's own
+   store of previously fetched full-text PDFs, named `<Surname>_<Year>_<sanitised-DOI>.pdf`
+   (a 2020 Smith paper at `10.1111/mec.14497` → `Smith_2020_10.1111_mec.14497.pdf`), so a `Glob`
+   for `*<sanitised-DOI>.pdf` (the DOI sits in the name) — or by first-author surname + year — is a
+   near-zero-read match. Grown automatically (see tier 4).
+3. **Personal library** — `D:/workspace/AA_Literature/` (read-only; the user's
    subscription-sourced library, reused across jobs). Identify a matching PDF in two passes:
    - **Filename pass (cheap, first).** `Glob` the library recursively and select any PDF whose
      filename or path contains the first-author surname **and** year (or the DOI).
@@ -133,23 +139,33 @@ the cascade in order and stop at the first tier that yields the full text:
      author list, year, and often the DOI — enough to identify the paper. Narrow candidates
      first where you can (filenames sharing any token — surname, a title word, or the year); if
      filenames carry no usable token at all, scan first pages, but **cap the scan at ~40 PDFs
-     per source** and, if the library is larger and unindexed, stop and fall through to tier 3/4
+     per source** and, if the library is larger and unindexed, stop and fall through to tier 4/5
      rather than reading hundreds of files — and note in your output that the library would
-     benefit from descriptive filenames (`<Surname><Year>...`) or an index.
+     benefit from descriptive filenames (`<Surname>_<Year>_<DOI>`) or an index.
    Confirm the match (title + first author + year agree) before reading the body. If two
-   candidates are plausible, prefer to request rather than cite the wrong paper.
-3. **Open-access web** — Unpaywall (uses `CLAIM_CHECK_EMAIL`) → PMC → preprint mirror →
-   publisher open-access → as a last automated step, the CrossRef/PubMed abstract.
-4. **Request the PDF from the user.** If the source is paywalled, load-bearing, and absent from
-   tiers 1–2, **do not cite the load-bearing claim from the abstract alone.** Add the source to
+   candidates are plausible, prefer to request rather than cite the wrong paper. **A library
+   paper that ends up cited is also copied into `Literature/`** as
+   `Literature/<Surname>_<Year>_<sanitised-DOI>.pdf` (author, year and DOI are already known from discovery), so
+   later runs resolve it at tier 2 and skip this scan — the copy is filed by `/reference-check`
+   (its PDF-filing step), not by you; surface the matched file path and DOI in your provenance
+   so the deposit can be made.
+4. **Open-access web** — Unpaywall (uses `CLAIM_CHECK_EMAIL`) → PMC → preprint mirror →
+   publisher open-access → as a last automated step, the CrossRef/PubMed abstract. A full-text
+   PDF obtained here for a source that ends up **cited in the manuscript** is filed to
+   `Literature/<Surname>_<Year>_<sanitised-DOI>.pdf` so the next run hits tier 2 — the deposit
+   is filed by `/reference-check`, not by you: surface the DOI and the open-access PDF URL in
+   your provenance so it can be filed.
+5. **Request the PDF from the user.** If the source is paywalled, load-bearing, and absent from
+   tiers 1–3, **do not cite the load-bearing claim from the abstract alone.** Add the source to
    a **`## Full text needed`** block in your output (citation key, DOI, title, and the exact
-   parameter/claim that needs it) and mark its provenance read depth **"awaiting PDF"**. The
-   Orchestrator relays the request; the user drops the PDF into `jobs/<slug>/references/` and
-   the step re-runs.
+   parameter/claim that needs it) and mark its provenance read depth **"awaiting PDF"**.
+   `/reference-check` relays the request; the user drops the PDF into `Literature/` (or
+   `jobs/<slug>/references/`) and the step re-runs.
 
-You only ever **read** `references/` and the library — never write to either; the user owns
-both. Background/context citations that do not carry a parameter or a verifiable assertion may
-remain "abstract only" without a request.
+You only ever **read** `Literature/`, `references/`, and the personal library — you write to
+none of them; the user owns `references/` and the personal library, and `/reference-check`
+files PDFs into `Literature/`. Background/context citations that do not carry a parameter or a
+verifiable assertion may remain "abstract only" without a request.
 
 ## Output format
 
@@ -161,12 +177,12 @@ Return a single markdown block (save nothing to disk — the calling agent conso
 Scope: <ecology | life history | genetics/genomics | …>
 Sources searched: CrossRef, PubMed, Google Scholar, <others>
 
-## Facts for the Preamble / Discussion
+## Candidate sources / facts
 
-- <fact, one sentence> [<CitationKey>]
+- <fact or candidate source, one sentence> [<CitationKey>]
 - ...
 
-## Parameters for the Planner
+## Parameters found (if a parameter scope was requested)
 
 | Parameter | Value | Source | Confidence |
 |---|---|---|---|
@@ -174,9 +190,9 @@ Sources searched: CrossRef, PubMed, Google Scholar, <others>
 | Age at first reproduction | ... | ... | ... |
 | ... | ... | ... | ... |
 
-## References (CSIRO Harvard per reference-style-1, metadata-resolved)
+## References (CSIRO Harvard per reference-style, metadata-resolved)
 
-<One entry per cited source, in the `reference-style-1` house form (see below). Mark preprints
+<One entry per cited source, in the `reference-style` house form (see below). Mark preprints
 with `[Preprint]`.>
 
 ## Citation provenance
@@ -192,10 +208,10 @@ library, or open access. Omit this section if there are none.>
 
 | CitationKey | DOI | Title | Why full text is needed |
 |---|---|---|---|
-| Jones2018 | 10.xxxx/xxxx | ... | clutch-size parameter for the planner; abstract gives no number |
+| Jones2018 | 10.xxxx/xxxx | ... | needed to verify the carrying claim; abstract gives no detail |
 ```
 
-### Reference house form (reference-style-1) — emit exactly this
+### Reference house form (reference-style) — emit exactly this
 
 Format references in the CSIRO Harvard house form so the consolidated list needs no rework:
 
@@ -214,13 +230,13 @@ Format references in the CSIRO Harvard house form so the consolidated list needs
   *Molecular Ecology Resources* 18:691–699. doi:10.1111/1755-0998.12745`
 
 For books, chapters, theses, preprints, datasets, and reports, follow the corresponding entry
-type in `reference-style-1`.
+type in `reference-style`.
 
 ## Behaviour rules
 
-- **Primary literature only.** If a relevant source is a government plan, an IUCN assessment,
-  or a public submission, do not cite it here — note that it exists and hand it to
-  `lit-search-b`.
+- **Primary literature focus.** If a relevant source is a government plan, an IUCN assessment,
+  or a public submission, note that it exists rather than treating it as a peer-reviewed
+  reference.
 - **No fabrication.** Every reference must resolve to a real record. If you cannot verify a
   promising candidate, exclude it and say what you were unable to confirm.
 - **Authorship and pages come from the DOI record, never from memory or an abstract page.** The
@@ -230,7 +246,7 @@ type in `reference-style-1`.
   metadata, which must still come from the canonical record. State in your findings that
   abstract-only metadata should be re-verified downstream by `citation-check`.
 - **Numbers carry sources.** A life-history value without a citation is not delivered.
-- **Stay concise.** You feed a briefing, not a systematic review. Prefer the few authoritative
-  sources over an exhaustive list.
-- **References are reusable.** Emit them in the `reference-style-1` house form above so the
-  report's consolidated reference list and the `citation-check` audit ingest them without rework.
+- **Stay concise.** You feed a reference check, not a systematic review. Prefer the few
+  authoritative sources over an exhaustive list.
+- **References are reusable.** Emit them in the `reference-style` house form above so the
+  manuscript's reference list and the `citation-check` audit ingest them without rework.

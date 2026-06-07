@@ -1,12 +1,36 @@
-# Claude_SandPit_Biomatix_Reports
+# Claude_SandPit_Reference_Check
 
-A Claude Code harness for producing population-genetics consulting reports for Biomatix Pty Ltd. The harness wraps the dartRverse R toolchain in a structured pipeline that turns a client brief into a Biomatix house-style report.
+A Claude Code harness for **checking the referencing of a draft manuscript** before submission.
+It audits citations and the reference list — and does nothing else (no writing, no analysis).
+
+The audit covers: in-text and caption citations all appear in the reference list and vice
+versa; no key published work is missing; every cited reference exists and its metadata is
+correct and formatted to the target journal; the full-text PDF of each cited reference is filed
+in `Literature/`; and each cited source actually supports the assertion it is attached to.
+
+## Usage
+
+```
+/new-job <slug>                       scaffold jobs/<slug>/ and pin it
+# drop the manuscript into jobs/<slug>/draft/
+/reference-check jobs/<slug>/draft/<file>   run all seven checks -> outputs/reference_audit.md
+```
 
 ## Documentation
 
-- [MANUAL.md](MANUAL.md) — operating manual: how the harness is structured, how to run a job end to end, how the skills and critic agents fit together.
-- [.claude/CLAUDE.md](.claude/CLAUDE.md) — project rules read by Claude Code at session start: coding conventions, R/RStudio integration, per-job isolation, memory scopes, safety hooks.
+- [MANUAL.md](MANUAL.md) — how the harness is structured and how to run a check end to end.
+- [.claude/CLAUDE.md](.claude/CLAUDE.md) — project rules read at session start: the seven
+  tasks, the skills, file conventions, memory, and the safety hook.
+
+## Skills
+
+- `reference-check` — orchestrator; runs the seven checks in order.
+- `citation-check` — references exist and metadata is correct.
+- `reference-style` — format a reference list (target journal authoritative).
+- `claim-check` — the cited source supports the in-text assertion.
+- `lit-search-a` — find missing key works and locate full-text PDFs.
 
 ## Repository scope
 
-This repository tracks the harness only — skills, agents, hooks, slash commands, project rules, and the manual. Per-contract work under `jobs/<slug>/` (briefs, raw data, drafts, final outputs) is deliberately excluded by `.gitignore` and kept on the local working machine.
+The harness is tracked (skills, commands, hook, project rules, manual). Per-manuscript work
+under `jobs/<slug>/` and the `Literature/` PDFs are git-ignored and kept on the local machine.

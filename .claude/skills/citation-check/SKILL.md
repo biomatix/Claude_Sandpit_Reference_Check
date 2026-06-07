@@ -12,7 +12,7 @@ description: >
   in place. Use whenever the user asks you to verify, validate, audit, fact-check, sanity-check,
   or "check the references exist" in a reference list or bibliography. Does NOT cross-check
   in-text citations against the reference list (a separate concern). Does NOT reformat
-  references — use `reference-style-1` for that.
+  references — use `reference-style` for that.
 ---
 
 # Citation existence and accuracy check
@@ -32,7 +32,7 @@ You verify that every reference in a reference list points to a real publication
 **Out of scope (other skills handle these):**
 - Cross-checking that each reference is cited somewhere in the manuscript text, or that every in-text citation has a matching reference. Do not read or parse the manuscript body for citations.
 - **Verifying that the cited paper actually supports the in-text assertion that cites it.** That is the job of `claim-check`, which retrieves the cited content (open-access PDF/HTML, preprint mirror, or abstract as fallback) and compares it to the carrying sentence. `citation-check` and `claim-check` are complementary: existence + metadata vs. assertion vs. source. A draft going to a client or journal should pass both.
-- Reformatting references in any particular style (e.g. CSIRO Harvard, APA, Vancouver). Use `reference-style-1` for that.
+- Reformatting references in any particular style (e.g. CSIRO Harvard, APA, Vancouver). Use `reference-style` for that.
 - Searching for new papers to add to the bibliography or building a bibliography from scratch.
 
 If the user asks for any of the above, point them to the relevant skill and stop.

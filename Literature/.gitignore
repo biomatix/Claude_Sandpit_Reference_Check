@@ -1,0 +1,13 @@
+# Literature
+#
+# Shared store of full-text PDFs for references cited in a checked manuscript.
+# The reference-check workflow and claim-check file copies here, named
+# <FirstAuthorSurname>_<Year>_<sanitised-DOI>.pdf (DOI's "/" -> "_", e.g.
+# 10.1111/mec.14497 -> Smith_2020_10.1111_mec.14497.pdf), so later checks
+# resolve the same source locally instead of re-fetching. The PDFs are
+# build artefacts, not source: keep the folder tracked, but not its contents.
+# (also ignore _txt/ — pdftotext extractions = derived working files, and full
+#  copyrighted paper text must never be committed.)
+*.pdf
+_txt/
+!.gitignore

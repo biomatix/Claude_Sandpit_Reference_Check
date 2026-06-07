@@ -22,4 +22,4 @@ _(none yet)_
 
 ## Reference
 
-- [GitHub remote](memory/github_remote.md) — gh CLI is not installed on this machine; use plain git.
+- [GitHub remote](memory/github_remote.md) — repo at biomatix/Claude_SandPit_Reference_Check (private); push via GitHub Desktop; gh CLI not installed.

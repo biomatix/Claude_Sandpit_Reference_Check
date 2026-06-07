@@ -18,7 +18,7 @@ in `Literature/`; and each cited source actually supports the assertion it is at
 
 ## Documentation
 
-- [MANUAL.md](MANUAL.md) — how the harness is structured and how to run a check end to end.
+- [MANUAL.md](MANUAL.md) — full operating manual: the seven checks, a workflow diagram, running a job step by step, and the **EndNote** round-trip for pulling PDFs through institutional access.
 - [.claude/CLAUDE.md](.claude/CLAUDE.md) — project rules read at session start: the seven
   tasks, the skills, file conventions, memory, and the safety hook.
 

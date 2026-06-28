@@ -9,5 +9,6 @@
 # (also ignore _txt/ — pdftotext extractions = derived working files, and full
 #  copyrighted paper text must never be committed.)
 *.pdf
+*.epub
 _txt/
 !.gitignore

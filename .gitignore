@@ -16,6 +16,9 @@
 .claude/active_job
 .claude/settings.local.json
 .claude/.credentials.json
+# Local MCP server config (references a PAT via env var; not part of the
+# published harness, and kept out of the public repo as defence in depth).
+.mcp.json
 
 # --- Project-level memory ----------------------------------
 #  Track the empty MEMORY.md proforma and memory/.gitkeep so

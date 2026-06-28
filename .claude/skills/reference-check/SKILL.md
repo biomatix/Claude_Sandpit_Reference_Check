@@ -2,7 +2,7 @@
 name: reference-check
 description: >
   Audit the referencing of an existing draft manuscript end to end, and do nothing else
-  (no rewriting of the science, no new analysis). Runs seven checks in order: (1) every
+  (no rewriting of the science, no new analysis). Runs eight checks in order: (1) every
   in-text and figure/table-caption citation appears in the reference list; (2) every
   reference-list entry is cited somewhere in the manuscript; (3) flags any key published
   work that appears to be missing; (4) confirms each cited reference EXISTS (CrossRef / the
@@ -10,10 +10,12 @@ description: >
   pages) and formats it to the target journal's style — dropping bracketed issue numbers
   the journal does not require and making title capitalisation consistent; (6) locates the
   full-text PDF and files a copy in Literature/, or asks the user to supply it; (7) checks
-  the cited source actually supports the assertion next to the citation, flagging departures.
-  Orchestrates the citation-check, claim-check, reference-style and lit-search-a skills.
+  the cited source actually supports the assertion next to the citation, flagging departures;
+  (8) checks every direct quotation is reproduced verbatim from the cited source and on the
+  cited page, flagging alterations and quotation-format departures. Orchestrates the
+  citation-check, claim-check, quote-check, reference-style and lit-search-a skills.
   Use when the user asks to "check the references", "audit the citations", "check the
-  referencing in this manuscript", or supplies a draft and a reference list.
+  referencing in this manuscript", "check the quotations", or supplies a draft and a reference list.
 ---
 
 # Reference check for a draft manuscript
@@ -21,11 +23,12 @@ description: >
 ## Role
 
 You audit the **referencing** of an existing draft manuscript. You change nothing about the
-science, the argument, or the prose. Your entire job is the seven checks below: every
+science, the argument, or the prose. Your entire job is the eight checks below: every
 in-text and caption citation is in the reference list and vice versa, no key reference is
 missing, every cited reference exists and is described correctly and in the target journal's
-style, every cited PDF is filed in `Literature/`, and every assertion is actually supported
-by the source it cites.
+style, every cited PDF is filed in `Literature/`, every assertion is actually supported
+by the source it cites, and every direct quotation is reproduced verbatim from the cited
+source on the cited page.
 
 You **report** findings and **propose** corrections. You apply an edit to the manuscript or
 reference list only when the user asks you to (see *Applying fixes*). When you cannot resolve
@@ -39,6 +42,7 @@ This skill is an **orchestrator**. It sequences four worker skills:
 | 4 — references exist; 5 — metadata correct | `citation-check` |
 | 5 — formatting to the journal style | `reference-style` |
 | 7 — claim supported by source | `claim-check` |
+| 8 — quotations verbatim & page-located | `quote-check` |
 | 3 — key references missing; 6 — locate/file PDFs | `lit-search-a` |
 | 1 & 2 — in-text ↔ reference-list cross-check | this skill (below) |
 
@@ -230,6 +234,31 @@ verdict — to the user, with the carrying sentence, the source, and (where text
 the quoted passage. A `supported` verdict must carry its quote. Never soften `paywalled` into
 `supported`.
 
+### Check 8 — are direct quotations verbatim, and on the cited page?
+
+Invoke **`quote-check`** against the manuscript. It extracts every **direct quotation** —
+double-quoted spans, single-quoted quotations (told apart from single-quote emphasis by an
+adjacent citation or length, and flagged for conversion to double quotes), and long quotations
+set as indented italics or block quotes — with its single-source citation and page, retrieves
+the cited source's PDF (reusing the check-6
+cascade and the PDFs already filed in `Literature/`), and tests each quote
+**character-for-character** against the source, honouring ellipsis (`…`) elisions and
+`[bracketed]`/`[sic]` editorial marks. For each quotation it returns one verdict:
+**verbatim — page confirmed**, **verbatim — page missing / not after a colon / wrong page**,
+**verbatim apart from editorial `[…]`/`[sic]`**, **altered — not verbatim** (with the
+word-/punctuation-level diff), **not found in source**, or **manual check needed** (no
+readable full text). It also flags **quotation-format departures** against the sandpit's
+rules: a missing page, a page not given after a colon, a quotation citing more than one
+source, and a quotation over 30 words still wrapped in quote marks instead of indented
+italics.
+
+**Flag every departure** — every non-`verbatim/page-confirmed` verdict and every format
+departure — to the user, with the quoted text, the source, the cited vs found page, and the
+proposed verbatim correction. A `verbatim` verdict must come from the matcher, and a page is
+"confirmed" only when the cited page matches a printed page number detected on the matched
+page; otherwise report it as "not auto-confirmed". Never silently alter a quotation, and never
+invent a page number.
+
 ## Outputs
 
 The job produces three deliverables, split by kind:
@@ -256,7 +285,8 @@ Target journal: <journal>  ·  Reference style: <journal style / Harvard fallbac
 
 ## Summary
 <One paragraph: counts — citations with no entry, orphan entries, missing key refs,
-existence/metadata errors, formatting fixes, PDFs filed, PDFs needed, claim departures.>
+existence/metadata errors, formatting fixes, PDFs filed, PDFs needed, claim departures,
+quotation departures (non-verbatim, wrong/missing page, format).>
 
 ## 1. In-text/caption citations with no reference-list entry
 ## 2. Reference-list entries never cited
@@ -265,6 +295,7 @@ existence/metadata errors, formatting fixes, PDFs filed, PDFs needed, claim depa
 ## 4 & 5. Existence, metadata, and journal formatting (per entry)
 ## 6. Full-text PDFs — filed in Literature/ vs. needed from the user
 ## 7. Claim-vs-source — departures flagged
+## 8. Quotations — verbatim & page check, and quotation-format departures
 
 ## Action items for the user
 <Numbered, shortest path to a clean reference section: PDFs to supply, claims to re-word,
@@ -284,6 +315,10 @@ You are read-only on the manuscript by default. Apply edits only when the user e
   entry to add.
 - **Claim departures** (check 7) — never silently re-word the science. Propose a calibrated
   rewrite and leave the decision to the user.
+- **Quotation departures** (check 8) — never silently alter a quotation or insert a page
+  number. Propose the verbatim correction, the colon-page fix, or the indented-italics
+  reformatting, and let the user confirm. A quote whose source cannot be read stays flagged
+  as *manual check needed*, not quietly accepted.
 
 Log every applied change to `outputs/reference_audit_changes.md` (or beside the draft).
 

@@ -26,6 +26,12 @@ target journal. The audit comprises exactly these tasks, and **nothing more**:
    if it cannot be located, **ask the user** to download it into `Literature/`.
 7. **Claim support.** The cited source actually contains text supporting the assertion it is
    attached to. **Flag every departure** to the user.
+8. **Quotations.** Every direct quotation is reproduced **verbatim** (words and punctuation) from
+   the cited source, with any omission marked by an ellipsis and any editorial change in
+   `[brackets]`; its citation names a **single** source with the **page after a colon**
+   (`Brown, 1996:72`); and a quotation over 30 words is set as indented italics without quote
+   marks. **Flag every departure** — non-verbatim text, a wrong/missing/mis-punctuated page, a
+   multi-source citation, or a long quote still in quote marks. The full rules are in §8.
 
 Do not extend beyond these tasks. Do not rewrite the science, restructure the manuscript, edit
 prose for style, or perform any computation. When something cannot be verified (an
@@ -37,7 +43,7 @@ over it. **Never fabricate** a reference, a DOI, or a supporting passage.
 ## 2. The workflow and its skills
 
 The whole job runs through the **`reference-check`** skill (the orchestrator). It sequences
-four worker skills, each of which the user may also invoke directly:
+five worker skills, each of which the user may also invoke directly:
 
 - **`/reference-check`** — runs all seven checks in order over a manuscript and writes a single
   `reference_audit.md`. Start here.
@@ -51,6 +57,10 @@ four worker skills, each of which the user may also invoke directly:
 - **`/claim-check`** — task 7: the cited source supports the in-text assertion. Returns
   *supported / partially supported / contradicted / not found / paywalled — manual check
   needed*.
+- **`/quote-check`** — task 8: every direct quotation is reproduced verbatim from the cited
+  source and on the cited page. Checks quotes character-for-character (honouring ellipsis
+  elisions and `[bracketed]`/`[sic]` marks), confirms the cited page, and flags
+  quotation-format departures. Does **not** judge paraphrased claims (that is `claim-check`).
 - **`/lit-search-a`** — tasks 3 & 6: surface key published works the manuscript is missing, and
   locate / resolve a specific paper and its full-text PDF.
 
@@ -174,3 +184,43 @@ When the hook blocks a call it exits 2 with `BLOCKED by guard.ps1: <reason>` on 
 out-of-sandpit write, stop — the action is forbidden by policy. For a wrong-job write, stop and
 ask whether to `/switch-job`. Never edit `guard.ps1` to weaken a check without explicit user
 instruction; it is the project's hard safety boundary.
+
+---
+
+## 8. Quotation rules
+
+These are the house rules `quote-check` (task 8) enforces. A quotation that follows them is
+checked against its source; a quotation that breaks them is **flagged** (never silently fixed).
+
+1. **Verbatim.** A direct quotation reproduces the source exactly — words **and punctuation** —
+   not a paraphrase.
+2. **Double quotes for quotations.** Use double quotation marks (`"`). Single quotes (`'`) are
+   reserved for emphasis (`he 'dropped the bundle'`) or a quote within a quote (`the term
+   'enropion' means …`). Because a draft under audit may not yet follow this rule, `quote-check`
+   distinguishes a single-quoted *quotation* from single-quoted *emphasis* — a span immediately
+   followed by a citation, or longer than a few words, is taken as a quotation — and flags it for
+   conversion to double quotes. Output advice and corrected text always use double quotes.
+3. **Ellipsis marks an omission.** Truncate the start with a leading `…` inside the quote
+   marks, the end with a trailing `…`, and an internal aside removed with `…`. Material may be
+   missing only where an ellipsis appears.
+4. **Square brackets mark an editorial change.** An addition, clarification, or correction goes
+   in `[brackets]` — e.g. `parliamentary [sic] sessions`. Bracketed text is the author's, not
+   the source's, and cannot be auto-verified; it is flagged for a human eye.
+5. **Long quotations.** A quotation longer than **30 words** is set as **indented italics with
+   no quotation marks**; a shorter one is inline in double quotes.
+6. **Citation of a quotation.** A quotation is followed by the citation of the **single** source
+   that contains it, with the **page number separated from the citation by a colon** —
+   `(Brown, 1996:72)`.
+
+Worked example. The source (Brown, 1996:72) reads, verbatim: *It was always thought that the
+quick brown fox, a cunning beast, jumped over the lozy dog.* All of the following are
+rule-correct quotations of it:
+
+- `"It was always thought that the quick brown fox, a cunning beast, jumped over the lozy dog" (Brown, 1996:72).`
+- `"It was always thought that the quick brown fox, a cunning beast, jumped over the lazy [sic] dog" (Brown, 1996:72).`
+- `"… the quick brown fox, a cunning beast, jumped over the lazy [sic] dog" (Brown, 1996:72).`
+- `"… the quick brown fox … jumped over the lazy [sic] dog" (Brown, 1996:72).`
+- and, being over 30 words, set as indented italics without quote marks:
+  *It was always thought that the quick brown fox, a cunning beast, jumped over the lazy [sic]
+  dog but this is now known to be simply a fable that has perpetuated over time within the
+  English-speaking countries* (Brown, 1996:72).

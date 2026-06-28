@@ -1,18 +1,18 @@
 # Reference-check harness — user manual
 
 This sandpit is a **Claude Code harness** that audits the referencing of a draft manuscript
-before you submit it to a journal. It checks the citations and the reference list — and **does
-nothing else**: it does not write, rewrite, restructure, or analyse the science. It reports and
-proposes; it changes your files only when you ask.
+before you submit it to a journal. It checks the citations, the reference list, and the
+quotations — and **does nothing else**: it does not write, rewrite, restructure, or analyse the
+science. It reports and proposes; it changes your files only when you ask.
 
 This manual covers what it does, the end-to-end workflow (including the **EndNote** component for
 pulling PDFs through your institutional access), how to run a job, and what it produces.
 
 ---
 
-## 1. What it checks — the seven tasks
+## 1. What it checks — the eight tasks
 
-For one manuscript, the harness runs seven checks (see `.claude/CLAUDE.md §1`):
+For one manuscript, the harness runs eight checks (see `.claude/CLAUDE.md §1`):
 
 1. **In-text → list.** Every citation in the body *and in figure/table captions* appears in the
    reference list.
@@ -26,9 +26,25 @@ For one manuscript, the harness runs seven checks (see `.claude/CLAUDE.md §1`):
    to supply it).
 7. **Claim support.** The cited source actually contains text supporting the assertion next to
    it; departures are flagged.
+8. **Quotations.** Every direct quotation is reproduced **verbatim** from the cited source and
+   sits on the **cited page**; departures and quotation-format breaches are flagged.
 
 It **reports and proposes**; it edits the manuscript or reference list only on explicit request,
-and never fabricates a reference, DOI, or supporting quotation.
+and never fabricates a reference, DOI, supporting passage, or quotation.
+
+### The quotation rules (task 8)
+
+Check 8 enforces the house rules in `.claude/CLAUDE.md §8`. In short:
+
+- A quotation is **verbatim** — words *and punctuation* — never a paraphrase.
+- **Double** quotes delimit a quotation; **single** quotes are for emphasis or a quote within a
+  quote. A draft may break this rule, so the harness tells a single-quoted *quotation* (one
+  immediately followed by a citation, or longer than a few words) from single-quoted *emphasis*,
+  and flags the quotation for conversion to double quotes. Its advice always uses double quotes.
+- An omission is marked by an ellipsis `…`; an editorial change goes in `[brackets]` (e.g.
+  `[sic]`), which the harness flags for your eye since it can't verify bracketed text.
+- A quotation over **30 words** is set as indented italics with no quote marks.
+- A quotation cites a **single** source with the **page after a colon** — `(Brown, 1996:72)`.
 
 ---
 
@@ -58,28 +74,31 @@ the part robots can't (authenticated PDF download).
   │  whatever it CAN'T get (paywalled / bot-blocked) →  pdfs_needed.ris  ────┼──┐
   └───────────────┬─────────────────────────────────────────────────────────┘  │
                   │                                                              │
-                  │           ┌──────────────  YOU + ENDNOTE  ◄────────────────┘
-                  │           │  import pdfs_needed.ris → Find Full Text (ANU)
-                  │           │  → copy the PDFs into Literature/  → tell harness
-                  │           └──────────────┬──────────────────────────────────
-                  │                          │ (harness normalises the filenames)
-  ┌───────────────▼──────────────────────────▼──────────────────────────────┐
-  │ STAGE 3 — EXAMINE  (check 7, once PDFs are in)                           │
-  │   • claim-check every in-text assertion against its source PDF           │
-  │   • flag supported / partial / contradicted / not-found                 │
+  ┌───────────────▼─────────────  YOU + ENDNOTE  ◄──────────────────────────────┘
+  │  import pdfs_needed.ris → Find Full Text (ANU)
+  │  → copy the PDFs into Literature/  → tell harness
+  └───────────────┬──────────────────────────────────
+                  │ (harness normalises the filenames)
+  ┌───────────────▼────────────────────────────────────────────────────────┐
+  │ STAGE 3 — EXAMINE  (checks 7 & 8, once PDFs are in)                      │
+  │   • claim-check every in-text assertion against its source PDF  (7)      │
+  │       → supported / partial / contradicted / not-found                  │
+  │   • quote-check every direct quotation against its source PDF   (8)      │
+  │       → verbatim+page / altered / wrong-or-missing page / format        │
   └───────────────┬────────────────────────────────────────────────────────┘
                   │
   ┌───────────────▼────────────────────────────────────────────────────────┐
   │ DELIVERABLES                                                             │
-  │   reference_audit.md + claims_audit.md   (issues & analysis — markdown)  │
+  │   reference_audit.md + claims_audit.md + quotes_audit.md  (markdown)     │
   │   references.ris                          (clean corrected list — RIS)   │
   │   pdfs_needed.ris                         (anything still to fetch — RIS)│
-  │   → you apply the fixes / run the PLOS style in EndNote                  │
+  │   → you apply the fixes / run the journal style in EndNote               │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 The checks **interleave** in practice (metadata verification feeds the cross-check; claim-check
-waits on PDFs), but locate → source-PDFs → examine is the spine.
+and quote-check both wait on PDFs), but locate → source-PDFs → examine is the spine. Claim-check
+and quote-check share the same filed PDFs: once a source is in `Literature/`, both read it.
 
 ---
 
@@ -109,11 +128,15 @@ waits on PDFs), but locate → source-PDFs → examine is the spine.
 4. **Do the EndNote PDF round-trip** (section 4) to obtain the remaining PDFs and drop them into
    `Literature/`. Tell the harness when done; it normalises the filenames and confirms coverage.
 
-5. **Finish the claim-check (stage 3)** once all cited PDFs are present.
+5. **Finish the examination (stage 3)** once all cited PDFs are present — claim-check (check 7)
+   and quote-check (check 8) run against the filed sources.
 
-6. **Review and apply.** Read `reference_audit.md` / `claims_audit.md`. Ask the harness to apply
-   any high-confidence fixes (it logs them) and to produce the final `references.ris`. Run the
-   journal style in EndNote for the submission-ready bibliography.
+6. **Review and apply.** Read `reference_audit.md`, `claims_audit.md`, and `quotes_audit.md`. Ask
+   the harness to apply any high-confidence fixes (it logs them) and to produce the final
+   `references.ris`. Run the journal style in EndNote for the submission-ready bibliography.
+
+You can also run a single check directly — e.g. `/quote-check jobs/<slug>/draft/<file>` to verify
+just the quotations, or `/citation-check` for existence and metadata only.
 
 ---
 
@@ -124,16 +147,21 @@ waits on PDFs), but locate → source-PDFs → examine is the spine.
 that rejects scripted downloads *even for open-access papers*. EndNote, running in your
 authenticated session, gets past both. So the division of labour is: **the harness identifies
 exactly which PDFs are needed and hands you an RIS; EndNote (with your ANU access) downloads
-them.**
+them.** The same filed PDFs serve both claim-check and quote-check, so the round-trip is done
+once.
 
 ### 4.1 One-time setup
 - Install **EndNote *Desktop*** (the ANU library licence). *Find Full Text is desktop-only* —
   EndNote Web/Online (myendnoteweb.com) won't batch-download.
-- `Edit ▸ Preferences ▸ Find Full Text`: enable **DOI, PubMed (LinkOut), Web of Science, OpenURL**;
-  set the **OpenURL Path** and **"Authenticate with: URL"** to ANU's link-resolver / EZproxy
-  (the ANU build often has these preset). Or simply work **on the ANU VPN / on campus** so
-  publisher access is granted by IP — the licence alone does *not* unlock paywalls; network
-  recognition or the proxy login does.
+- `Edit ▸ Preferences ▸ Find Full Text`: enable **DOI, PubMed (LinkOut), Web of Science, OpenURL**,
+  and enter the **ANU** values:
+  - **OpenURL Path:** `https://anu.primo.exlibrisgroup.com/view/uresolver/61ANU_INST/openurl?`
+  - **Authenticate with: URL:** `https://virtual.anu.edu.au/login`  *(ANU reverse-proxy / EZproxy login — when Find Full Text runs, complete the ANU SSO popup that appears; that session is what unlocks subscribed publishers).*
+
+  Or simply work **on the ANU VPN / on campus** so publisher access is granted by IP — the
+  licence alone does *not* unlock paywalls; the proxy login (above) or network recognition does.
+  Note: some publishers bot-block EndNote's downloader regardless of entitlement, so a few PDFs
+  will always need a manual browser download.
 - **Keep the EndNote library OUT of `Literature/`.** Put `My EndNote Library.enl` and `.Data` in
   Documents. (See the warning in 4.3.)
 
@@ -149,7 +177,7 @@ them.**
    references → drag the PDFs to a folder, or copy the `.pdf` files from the `.Data\PDF`
    subfolders, into **`Literature/`** (any filenames — the harness renames them).
 5. Tell the harness "done." It runs `normalize_literature.py` to give every PDF the canonical
-   `Surname_Year_DOI.pdf` name, confirms coverage, and proceeds to claim-check.
+   `Surname_Year_DOI.pdf` name, confirms coverage, and proceeds to claim-check and quote-check.
 
 ### 4.3 ⚠ Gotchas (learned the hard way)
 - **Never create or keep your EndNote library inside `Literature/`.** EndNote's *PDF
@@ -163,6 +191,8 @@ them.**
 - **Find Full Text won't get everything in one pass** — open-access ones come easily; paywalled
   ones need the VPN/proxy live. Re-run for misses. Your *own* papers are quickest dropped in
   directly.
+- **Quotations need a readable, text-based PDF.** An image-only scan confirms a paper exists but
+  cannot be checked for verbatim text or page; quote-check flags those as *manual check needed*.
 - EndNote Web ≠ EndNote Desktop — only the desktop app has Find Full Text.
 
 ### 4.4 Mendeley / Zotero
@@ -178,7 +208,8 @@ read by the harness's library tier. `pdfs_needed.ris` imports into all three.
 **`<FirstAuthorSurname>_<Year>_<sanitised-DOI>.pdf`** (DOI `/`→`_`). PDFs and the `_txt/`
 extractions are git-ignored; only the folder is tracked.
 
-When full text is needed the harness works this cascade, stopping at the first hit:
+When full text is needed — for filing (check 6), claim-check (check 7), or quote-check (check 8)
+— the harness works this cascade, stopping at the first hit:
 1. `Literature/` (already filed) → 2. the job's `references/` → 3. your personal library
 **`D:/workspace/AA_Literature/`** (read-only) → 4. the **Georges lab page**
 (`georges.biomatix.org/publications`) for A. Georges–authored works → 5. open-access web
@@ -196,8 +227,9 @@ flags image-only scans.
 
 | File | Format | Contents |
 |---|---|---|
-| `outputs/reference_audit.md` | Markdown | the audit — all issues & analysis (the 7 checks) |
+| `outputs/reference_audit.md` | Markdown | the audit — all issues & analysis (the 8 checks) |
 | `outputs/claims_audit.md` | Markdown | per-citation claim-vs-source verdicts + quoted passages |
+| `outputs/quotes_audit.md` | Markdown | per-quotation verbatim & page verdicts + format breaches |
 | `outputs/references.ris` | **RIS** | the clean corrected reference list — import into EndNote |
 | `outputs/pdfs_needed.ris` | **RIS** | references still needing a PDF — the Find-Full-Text request |
 | `outputs/reference_audit_changes.{rtf,md}` | RTF/MD | log of any fixes applied (RTF shows changes **in colour**) |
@@ -227,9 +259,10 @@ that renumbers by order of appearance and abbreviates journals.
 ## 8. What it does NOT do
 
 It will not draft or rewrite the manuscript, edit prose for style, restructure sections, run any
-data analysis, build a bibliography from scratch, or invent a reference/DOI/quotation. Anything
-it cannot verify is **flagged**, not papered over. Its remit is the seven reference-checking
-tasks.
+data analysis, build a bibliography from scratch, or invent a reference/DOI/quotation. It does
+not silently "fix" a quotation or insert a page number — it proposes the verbatim correction and
+leaves the decision to you. Anything it cannot verify is **flagged**, not papered over. Its remit
+is the eight reference-checking tasks.
 
 ---
 
@@ -242,12 +275,17 @@ tasks.
 
 **Skills** (also invocable directly): `reference-check` (orchestrator), `citation-check`
 (existence + metadata), `reference-style` (journal formatting), `claim-check` (assertion vs
-source), `lit-search-a` (missing key works / locate a paper).
+source), `quote-check` (quotation verbatim + page), `lit-search-a` (missing key works / locate a
+paper).
 
-**Scripts** (`.claude/skills/reference-check/scripts/`)
-- `normalize_literature.py --lit Literature --refs <manuscript> [--apply]` — canonical PDF names
-- `build_ris.py --refs <list> --out references.ris --all` — clean reference list as RIS
-- `build_ris.py --refs <list> --lit Literature --out pdfs_needed.ris --missing` — Find-Full-Text request
+**Scripts**
+- `reference-check/scripts/normalize_literature.py --lit Literature --refs <manuscript> [--apply]`
+  — canonical PDF names
+- `reference-check/scripts/build_ris.py --refs <list> --out references.ris --all` — clean list as RIS
+- `reference-check/scripts/build_ris.py --refs <list> --lit Literature --out pdfs_needed.ris --missing`
+  — Find-Full-Text request
+- `quote-check/scripts/extract_quotes.py <draft.md>` — pull quotations + citations + pages (run by the skill)
+- `quote-check/scripts/match_quote.py --quote "<text>" --pdf <pdf> --cited-pages <n>` — verbatim & page test
 
 **EndNote loop:** `pdfs_needed.ris` → Import (RIS) → ANU VPN → Find Full Text → copy PDFs into
 `Literature/` → tell the harness. (Keep the EndNote library in Documents, not in `Literature/`.)
